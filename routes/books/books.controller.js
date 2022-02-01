@@ -1,11 +1,20 @@
-function getBooks() {}
+import { getAll, getById } from '../../models/mongodb.js';
+
+async function getBooks(req, res) {
+  const books = await getAll('books');
+  return await res.status(200).json(books);
+}
 
 function createBook() {}
 
-function getBook() {}
+async function getBook(req, res) {
+  const bookId = req.params.id;
+  const book = await getById('books', bookId);
+  return await res.status(200).json(book);
+}
 
-function updateBook() {}
+async function updateBook() {}
 
-function deleteBook() {}
+async function deleteBook() {}
 
 export { getBooks, createBook, getBook, updateBook, deleteBook };

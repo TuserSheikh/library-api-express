@@ -21,6 +21,7 @@
   "homepage": "https://github.com/TuserSheikh/library-api-express#readme",
   "dependencies": {
     "dotenv": "^14.3.2",
-    "express": "^4.17.2"
+    "express": "^4.17.2",
+    "mongodb": "^4.3.1"
   }
 }
