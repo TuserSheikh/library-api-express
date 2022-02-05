@@ -8,9 +8,10 @@ async function getBooks(req, res) {
 }
 
 async function createBook(req, res) {
+  const { path } = req.file;
   const { title, author } = req.body;
 
-  const book = await create(collectionName, { title, author });
+  const book = await create(collectionName, { title, author, path });
 
   return res.status(201).json({
     data: {
