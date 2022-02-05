@@ -1,3 +1,5 @@
+import { unlink } from 'fs/promises';
+
 import { getAll, getById, create, deleteById } from '../../models/mongodb.js';
 
 const collectionName = 'books';
@@ -42,7 +44,12 @@ async function deleteBook(req, res) {
   const book = await deleteById(collectionName, bookId);
 
   if (book.value) {
-    return await res.status(204);
+    try {
+      await unlink(book.value.path);
+    } catch (err) {
+      console.error('image delete error', err);
+    }
+    return await res.sendStatus(204);
   }
 
   return res.status(404).json({
