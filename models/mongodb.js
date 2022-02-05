@@ -1,6 +1,9 @@
 import { MongoClient, ObjectId } from 'mongodb';
 
-const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@libraryapi.gdlba.mongodb.net/${process.env.DB_DATABASE}?retryWrites=true&w=majority`;
+// for mongodb atlas
+// const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@libraryapi.gdlba.mongodb.net/${process.env.DB_DATABASE}?retryWrites=true&w=majority`;
+// for local
+const uri = 'mongodb://localhost:27017/library';
 
 const client = new MongoClient(uri, {
   useNewUrlParser: true,
@@ -32,4 +35,29 @@ async function getById(collectionName, documentId) {
   }
 }
 
-export { getAll, getById };
+async function create(collectionName, document) {
+  try {
+    await client.connect();
+    return await client.db().collection(collectionName).insertOne(document);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
+async function deleteById(collectionName, documentId) {
+  try {
+    await client.connect();
+    return await client
+      .db()
+      .collection(collectionName)
+      .findOneAndDelete({ _id: ObjectId(documentId) });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
+export { getAll, getById, create, deleteById };
