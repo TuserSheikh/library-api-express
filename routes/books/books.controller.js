@@ -6,11 +6,10 @@ const collectionName = 'books';
 
 async function getBooks(req, res) {
   const books = (await getAll(collectionName)).map(book => {
-    book.path = `${req.protocol}://${req.hostname}:${
-      process.env.PORT || 3000
-    }/${book.path}`;
+    book.path = `${req.protocol}://${req.get('host')}/${book.path}`;
     return book;
   });
+
   return await res.status(200).json({ data: books });
 }
 
@@ -32,9 +31,7 @@ async function getBook(req, res) {
   const book = await getById(collectionName, bookId);
 
   if (book) {
-    book.path = `${req.protocol}://${req.hostname}:${
-      process.env.PORT || 3000
-    }/${book.path}`;
+    book.path = `${req.protocol}://${req.get('host')}/${book.path}`;
     return await res.status(200).json({ data: book });
   }
 
@@ -57,6 +54,7 @@ async function deleteBook(req, res) {
     } catch (err) {
       console.error('image delete error', err);
     }
+
     return await res.sendStatus(204);
   }
 
