@@ -1,8 +1,7 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
 
-import { nanoid } from 'nanoid';
+// middlewares
+import upload from './../../middlewares/uploadImage.js';
 
 import {
   getBooks,
@@ -13,22 +12,6 @@ import {
 } from './books.controller.js';
 
 const booksRouter = express.Router();
-
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, 'images');
-  },
-
-  filename: function (req, file, cb) {
-    const fileExt = path.extname(file.originalname);
-    const uniqueId = nanoid();
-    const newFileName = uniqueId + fileExt;
-
-    cb(null, newFileName);
-  },
-});
-
-const upload = multer({ storage });
 
 booksRouter.get('/', getBooks);
 booksRouter.post('/', upload.single('image'), createBook);
