@@ -8,18 +8,18 @@ import handleErrors from './middlewares/handleErrors.js';
 
 // local files
 import booksRouter from './routes/books/books.router.js';
+import membersRouter from './routes/members/members.router.js';
 
 const app = express();
 const logStream = createWriteStream('logs/access.log', { flags: 'a' });
 
 app.use(express.json());
-
 app.use(morgan('combined', { stream: logStream }));
 app.use(morgan('combined'));
-
 app.use('/images', express.static('images'));
-app.use('/books', booksRouter);
 
+app.use('/books', booksRouter);
+app.use('/members', membersRouter);
 app.use(handleErrors);
 
 export default app;
