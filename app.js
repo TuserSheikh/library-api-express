@@ -1,7 +1,12 @@
+// node modules
 import express from 'express';
 import morgan from 'morgan';
 import { createWriteStream } from 'fs';
 
+// middlewares
+import handleErrors from './middlewares/handleErrors.js';
+
+// local files
 import booksRouter from './routes/books/books.router.js';
 
 const app = express();
@@ -14,5 +19,7 @@ app.use(morgan('combined'));
 
 app.use('/images', express.static('images'));
 app.use('/books', booksRouter);
+
+app.use(handleErrors);
 
 export default app;

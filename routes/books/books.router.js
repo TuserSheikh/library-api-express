@@ -3,13 +3,7 @@ import express from 'express';
 // middlewares
 import upload from './../../middlewares/uploadImage.js';
 
-import {
-  getBooks,
-  createBook,
-  getBook,
-  updateBook,
-  deleteBook,
-} from './books.controller.js';
+import { getBooks, createBook, getBook, updateBook, deleteBook } from './books.controller.js';
 
 const booksRouter = express.Router();
 
