@@ -2,7 +2,7 @@ import { GeneralError } from '../utils/errors.js';
 
 const handleErrors = (err, req, res, next) => {
   if (err instanceof GeneralError) {
-    return res.status(err.getCode()).json({
+    return res.status(err.code).json({
       error: {
         message: err.message,
       },

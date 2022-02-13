@@ -35,6 +35,20 @@ async function getById(collectionName, documentId) {
   }
 }
 
+async function getByField(collectionName, fieldName, fieldValue) {
+  try {
+    await client.connect();
+    return await client
+      .db()
+      .collection(collectionName)
+      .findOne({ [fieldName]: fieldValue });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
 async function create(collectionName, document) {
   try {
     await client.connect();
@@ -60,4 +74,18 @@ async function deleteById(collectionName, documentId) {
   }
 }
 
-export { getAll, getById, create, deleteById };
+async function createIndex(collectionName, indexField) {
+  try {
+    await client.connect();
+    return await client
+      .db()
+      .collection(collectionName)
+      .createIndex({ [indexField]: 1 });
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
+export { getAll, getById, getByField, create, deleteById, createIndex };
