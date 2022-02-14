@@ -10,10 +10,10 @@ const client = new MongoClient(uri, {
   useUnifiedTopology: true,
 });
 
-async function getAll(collectionName) {
+async function getAll(collectionName, condition = {}) {
   try {
     await client.connect();
-    return await client.db().collection(collectionName).find().toArray();
+    return await client.db().collection(collectionName).find(condition).toArray();
   } catch (err) {
     console.error(err);
   } finally {

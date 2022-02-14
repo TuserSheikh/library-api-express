@@ -7,7 +7,17 @@ import { getAll, getById, create, deleteById } from '../../models/mongodb.js';
 const collectionName = 'books';
 
 async function getBooks(req, res) {
-  const books = (await getAll(collectionName)).map(book => {
+  const { title, author } = req.query;
+
+  const condition = {};
+  if (title) {
+    condition.title = new RegExp(title);
+  }
+  if (author) {
+    condition.author = new RegExp(author);
+  }
+
+  const books = (await getAll(collectionName, condition)).map(book => {
     book.path = `${req.protocol}://${req.get('host')}/${book.path}`;
     return book;
   });
