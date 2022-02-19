@@ -43,7 +43,7 @@ async function createBook(req, res, next) {
   try {
     const value = await schema.validateAsync({ title, author });
 
-    const book = await create(collectionName, { ...value, path });
+    const book = await create(collectionName, { ...value, path, borrow: [], qty: 1 });
 
     return res.status(201).json({
       data: {

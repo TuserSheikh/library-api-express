@@ -23,7 +23,7 @@ async function signupUser(req, res, next) {
     const value = await schema.validateAsync(req.body);
     value.password = await bcrypt.hash(value.password, 10);
 
-    const user = await create(collectionName, { ...value, role: 'member', isActive: false });
+    const user = await create(collectionName, { ...value, role: 'member', isActive: false, borrow: [], fine: 0 });
     return res.status(201).json({
       data: {
         createdId: user.insertedId,
