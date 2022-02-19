@@ -3,6 +3,7 @@ import Joi from 'joi';
 
 import { BadRequest, NotFound } from '../../utils/errors.js';
 import { getAll, getById, create, deleteById } from '../../models/mongodb.js';
+import { borrowBook as borrowBookModel, returnbook } from '../../models/books.model.js';
 
 const collectionName = 'books';
 
@@ -95,4 +96,34 @@ async function deleteBook(req, res, next) {
   next(new NotFound('book not found'));
 }
 
-export { getBooks, createBook, getBook, updateBook, deleteBook };
+async function borrowBook(req, res, next) {
+  const userId = req.loggedinUser._id;
+  const bookId = req.body.booksId;
+
+  const book = await getById('books', bookId);
+  const user = await getById('users', userId);
+
+  if (!book) {
+    return next(new BadRequest('book not found'));
+  }
+
+  if (book.borrow.length >= book.qty) {
+    return next(new BadRequest('book is not available'));
+  }
+
+  const bookBorrowLimit = process.env.BOOK_BORROW_LIMIT || 5;
+  if (user.borrow.length >= bookBorrowLimit) {
+    return next(new BadRequest('book borrowing limit exceed'));
+  }
+
+  if (user.borrow.includes(bookId)) {
+    return next(new BadRequest('this book is already borrowed'));
+  }
+
+  await borrowBookModel(userId, bookId);
+  res.sendStatus(204);
+}
+
+async function returnBook(req, res, next) {}
+
+export { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, returnBook };

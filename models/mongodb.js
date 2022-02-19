@@ -88,4 +88,4 @@ async function createIndex(collectionName, indexField) {
   }
 }
 
-export { getAll, getById, getByField, create, deleteById, createIndex };
+export { client, getAll, getById, getByField, create, deleteById, createIndex };
