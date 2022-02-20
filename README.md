@@ -30,7 +30,7 @@ Very basic api for libray management system. This api build using [Express](http
   - name - string
   - email - string
   - password - hash string
-  - borrow - array [bookId's array that how many book a user borrow]
+  - borrow - array [array of {bookId, date} that how many book a user borrow and borrowing time]
   - isActive - bool
   - fine - number [total fine need to pay]
   - role - string [admin/member]
@@ -41,7 +41,7 @@ Very basic api for libray management system. This api build using [Express](http
   - title - string
   - author - string
   - path - string [image url of book cover]
-  - borrow - array [userId's array that how many users borrow a book]
+  - borrow - array [array of {userId, date} that how many users borrow a book and borrowing time]
   - qty - number [total copy of that book]
 
 <br>
