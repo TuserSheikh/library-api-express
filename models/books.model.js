@@ -16,15 +16,17 @@ async function borrowBook(userId, bookId) {
 
     try {
       await session.withTransaction(async session => {
+        const date = Date.now();
+
         await client
           .db()
           .collection('books')
-          .updateOne({ _id: ObjectId(bookId) }, { $push: { borrow: userId } });
+          .updateOne({ _id: ObjectId(bookId) }, { $push: { borrow: { userId, date } } });
 
         await client
           .db()
           .collection('users')
-          .updateOne({ _id: ObjectId(userId) }, { $push: { borrow: bookId } });
+          .updateOne({ _id: ObjectId(userId) }, { $push: { borrow: { bookId, date } } });
       }, transactionOptions);
     } catch (err) {
       console.error('transaction borrow book: ', err);

@@ -116,11 +116,13 @@ async function borrowBook(req, res, next) {
     return next(new BadRequest('book borrowing limit exceed'));
   }
 
-  if (user.borrow.includes(bookId)) {
+  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  if (alreadyBorrowed) {
     return next(new BadRequest('this book is already borrowed'));
   }
 
   await borrowBookModel(userId, bookId);
+
   res.sendStatus(204);
 }
 
