@@ -3,7 +3,7 @@ import Joi from 'joi';
 
 import { BadRequest, NotFound } from '../../utils/errors.js';
 import { getAll, getById, create, deleteById } from '../../models/mongodb.js';
-import { borrowBook as borrowBookModel, returnbook } from '../../models/books.model.js';
+import { borrowBook as borrowBookModel, returnbook as returnBookModel } from '../../models/books.model.js';
 
 const collectionName = 'books';
 
@@ -126,6 +126,25 @@ async function borrowBook(req, res, next) {
   res.sendStatus(204);
 }
 
-async function returnBook(req, res, next) {}
+async function returnBook(req, res, next) {
+  const userId = req.loggedinUser._id;
+  const bookId = req.body.booksId;
+
+  const book = await getById('books', bookId);
+  const user = await getById('users', userId);
+
+  if (!book) {
+    return next(new BadRequest('book not found'));
+  }
+
+  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  if (!alreadyBorrowed) {
+    return next(new BadRequest('this book is not borrowed'));
+  }
+
+  await returnBookModel(userId, bookId, alreadyBorrowed.date);
+
+  res.sendStatus(204);
+}
 
 export { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, returnBook };
