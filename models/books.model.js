@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 
 import { client } from './mongodb.js';
+import { emailSend } from '../utils/mail.js';
 
 const transactionOptions = {
   readPreference: 'primary',
@@ -79,7 +80,7 @@ async function returnbook(userId, bookId) {
   }
 }
 
-async function updateFineAndDeactivateIFNecessary(totalFine, userId) {
+async function updateFineAndDeactivateIFNecessary(totalFine, user) {
   try {
     await client.connect();
 
@@ -88,7 +89,7 @@ async function updateFineAndDeactivateIFNecessary(totalFine, userId) {
         .db()
         .collection('users')
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: ObjectId(user._id) },
           {
             $set: {
               fine: totalFine,
@@ -96,12 +97,19 @@ async function updateFineAndDeactivateIFNecessary(totalFine, userId) {
             },
           }
         );
+
+      // send email to user for user deactivate
+      await emailSend(
+        user.email,
+        'Account deactivate for fine',
+        'Account temporary deactivate for fine. to active account pay the due fine'
+      );
     } else {
       await client
         .db()
         .collection('users')
         .updateOne(
-          { _id: ObjectId(userId) },
+          { _id: ObjectId(user._id) },
           {
             $set: {
               fine: totalFine,

@@ -4,7 +4,7 @@ import { updateFineAndDeactivateIFNecessary } from '../models/books.model.js';
 import { getAll } from '../models/mongodb.js';
 
 const calculateFineJob = cron.schedule(
-  '* * * * *',
+  '0 0 * * *',
   async () => {
     const borrowedMembers = await getAll('users', { borrow: { $exists: true, $not: { $size: 0 } } });
     for (const borrowedMember of borrowedMembers) {
@@ -19,7 +19,7 @@ const calculateFineJob = cron.schedule(
       }
       // end calculate fine
 
-      await updateFineAndDeactivateIFNecessary(totalFine, borrowedMember._id);
+      await updateFineAndDeactivateIFNecessary(totalFine, borrowedMember);
     }
   },
   {

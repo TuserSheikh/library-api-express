@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 
 import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors.js';
 import { getAll, getById, create, deleteById, getByField } from '../../models/mongodb.js';
+import { emailSend } from '../../utils/mail.js';
 
 const collectionName = 'users';
 
@@ -24,6 +25,17 @@ async function signupUser(req, res, next) {
     value.password = await bcrypt.hash(value.password, 10);
 
     const user = await create(collectionName, { ...value, role: 'member', isActive: false, borrow: [], fine: 0 });
+
+    const createdUser = await getById('users', user.insertedId);
+
+    console.log(createdUser);
+
+    await emailSend(
+      createdUser.email,
+      'Need Approval',
+      'Account created successfully but need admin approval to active.'
+    );
+
     return res.status(201).json({
       data: {
         createdId: user.insertedId,
