@@ -7,12 +7,14 @@ import { createWriteStream } from 'fs';
 import handleErrors from './middlewares/handleErrors.js';
 
 // local files
+import { calculateFineJob } from './utils/cornJobs.js';
 import booksRouter from './routes/books/books.router.js';
 import usersRouter from './routes/users/users.router.js';
 
 const app = express();
 const logStream = createWriteStream('logs/access.log', { flags: 'a' });
 
+calculateFineJob.start();
 app.use(express.json());
 app.use(morgan('combined', { stream: logStream }));
 app.use(morgan('combined'));

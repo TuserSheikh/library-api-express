@@ -142,7 +142,7 @@ async function returnBook(req, res, next) {
     return next(new BadRequest('this book is not borrowed'));
   }
 
-  await returnBookModel(userId, bookId, alreadyBorrowed.date);
+  await returnBookModel(userId, bookId);
 
   res.sendStatus(204);
 }

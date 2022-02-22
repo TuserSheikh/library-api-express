@@ -40,18 +40,13 @@ async function borrowBook(userId, bookId) {
   }
 }
 
-async function returnbook(userId, bookId, borrowedTime) {
+async function returnbook(userId, bookId) {
   try {
     await client.connect();
     const session = client.startSession();
 
     try {
       await session.withTransaction(async session => {
-        // const borrowDays = Math.ceil((Date.now() - new Date(borrowedTime)) / (1000 * 3600 * 24));
-        // const finePerDay = process.env.FINE_PER_DAY || 10;
-        // const bookReturnDays = process.env.BOOK_RETURN_DAYS || 7;
-        // const fine = borrowDays > bookReturnDays ? (borrowDays - bookReturnDays) * finePerDay : 0;
-
         await client
           .db()
           .collection('books')
@@ -69,7 +64,6 @@ async function returnbook(userId, bookId, borrowedTime) {
             { _id: ObjectId(userId) },
             {
               $pull: { borrow: { bookId } },
-              // $inc: { fine },
             }
           );
       }, transactionOptions);
@@ -85,4 +79,41 @@ async function returnbook(userId, bookId, borrowedTime) {
   }
 }
 
-export { borrowBook, returnbook };
+async function updateFineAndDeactivateIFNecessary(totalFine, userId) {
+  try {
+    await client.connect();
+
+    if (totalFine > 100) {
+      await client
+        .db()
+        .collection('users')
+        .updateOne(
+          { _id: ObjectId(userId) },
+          {
+            $set: {
+              fine: totalFine,
+              isActive: false,
+            },
+          }
+        );
+    } else {
+      await client
+        .db()
+        .collection('users')
+        .updateOne(
+          { _id: ObjectId(userId) },
+          {
+            $set: {
+              fine: totalFine,
+            },
+          }
+        );
+    }
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
+export { borrowBook, returnbook, updateFineAndDeactivateIFNecessary };
