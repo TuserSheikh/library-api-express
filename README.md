@@ -2,6 +2,10 @@
 
 Very basic api for libray management system. This api build using [Express](https://expressjs.com/) and [MongoDb](https://www.mongodb.com/).
 
+# Postman Collection
+
+[![Run in Postman](https://run.pstmn.io/button.svg)](https://god.gw.postman.com/run-collection/4435965-06e5e3ae-63f9-47af-9e8c-85c3b17efce0?action=collection%2Ffork&collection-url=entityId%3D4435965-06e5e3ae-63f9-47af-9e8c-85c3b17efce0%26entityType%3Dcollection%26workspaceId%3D4cb082a2-3fec-4ea2-8a08-00baa9a231b6#?env%5Blibrary_api%5D=W3sia2V5IjoidXJsIiwidmFsdWUiOiJodHRwOi8vbG9jYWxob3N0OjMwMDAiLCJlbmFibGVkIjp0cnVlLCJ0eXBlIjoiZGVmYXVsdCJ9XQ==)
+
 ## General Rules
 
 - Unregistered user search book by title or author and show the book information.
