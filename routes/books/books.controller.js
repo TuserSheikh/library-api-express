@@ -33,20 +33,19 @@ async function createBook(req, res, next) {
     return next(new BadRequest('image (.png|.jpg|.jpeg) is required'));
   }
 
-  const { title, author } = req.body;
-
   const schema = Joi.object({
     title: Joi.string().required(),
     author: Joi.string().required(),
+    qty: Joi.number().positive().integer(),
   });
 
   try {
-    const value = await schema.validateAsync({ title, author });
+    const value = await schema.validateAsync(req.body);
+    value.qty = value.qty ?? 1;
 
-    const book = await create(collectionName, { ...value, path, borrow: [], qty: 1 });
-
+    const book = await create(collectionName, { ...value, path, borrow: [] });
     if (!book) {
-      next(new BadRequest('already exists'));
+      return next(new BadRequest('already exists'));
     }
 
     return res.status(201).json({
