@@ -60,6 +60,20 @@ async function create(collectionName, document) {
   }
 }
 
+async function update(collectionName, documentId, updatedDocument) {
+  try {
+    await client.connect();
+    return await client
+      .db()
+      .collection(collectionName)
+      .findOneAndUpdate({ _id: ObjectId(documentId) }, updatedDocument);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    await client.close();
+  }
+}
+
 async function deleteById(collectionName, documentId) {
   try {
     await client.connect();
@@ -85,4 +99,4 @@ async function createIndex(collectionName, indexFields) {
   }
 }
 
-export { client, getAll, getById, getByField, create, deleteById, createIndex };
+export { client, getAll, getById, getByField, create, update, deleteById, createIndex };

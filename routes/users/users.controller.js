@@ -3,7 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
 import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors.js';
-import { getAll, getById, create, deleteById, getByField } from '../../models/mongodb.js';
+import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb.js';
 import { emailSend } from '../../utils/mail.js';
 import { payFine as payFineModel } from '../../models/users.model.js';
 
@@ -105,7 +105,27 @@ async function getUser(req, res, next) {
 async function updateUser(req, res, next) {
   const userId = req.params.id;
 
-  return next(new NotFound('user not found'));
+  const user = await getById(collectionName, userId);
+  if (!user) {
+    return next(new NotFound('user not found'));
+  }
+
+  const schema = Joi.object({
+    isActive: Joi.boolean().required(),
+  });
+
+  try {
+    const value = await schema.validateAsync(req.body);
+
+    const updateIserActiveStatus = {
+      $set: value,
+    };
+
+    await update(collectionName, userId, updateIserActiveStatus);
+    return res.sendStatus(204);
+  } catch (err) {
+    next(new BadRequest(err.message));
+  }
 }
 
 async function deleteUser(req, res, next) {
