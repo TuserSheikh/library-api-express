@@ -45,6 +45,10 @@ async function createBook(req, res, next) {
 
     const book = await create(collectionName, { ...value, path, borrow: [], qty: 1 });
 
+    if (!book) {
+      next(new BadRequest('already exists'));
+    }
+
     return res.status(201).json({
       data: {
         createdId: book.insertedId,

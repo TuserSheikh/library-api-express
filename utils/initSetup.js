@@ -24,6 +24,8 @@ async function initSetup() {
     }
 
     await createIndex('users', { email: 1 });
+
+    await createIndex('books', { title: 1, author: 1 });
   } catch (err) {
     console.error(err);
   } finally {
