@@ -74,13 +74,10 @@ async function deleteById(collectionName, documentId) {
   }
 }
 
-async function createIndex(collectionName, indexField) {
+async function createIndex(collectionName, indexFields) {
   try {
     await client.connect();
-    return await client
-      .db()
-      .collection(collectionName)
-      .createIndex({ [indexField]: 1 });
+    return await client.db().collection(collectionName).createIndex(indexFields, { unique: true });
   } catch (err) {
     console.error(err);
   } finally {

@@ -26,6 +26,11 @@ async function signupUser(req, res, next) {
     value.password = await bcrypt.hash(value.password, 10);
 
     const user = await create(collectionName, { ...value, role: 'member', isActive: false, borrow: [], fine: 0 });
+
+    if (!user) {
+      next(new BadRequest(`"${value.email}" already exists`));
+    }
+
     const createdUser = await getById('users', user.insertedId);
 
     await emailSend(

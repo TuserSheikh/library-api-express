@@ -1,6 +1,6 @@
 import bcrypt from 'bcrypt';
 
-import { client, getByField, create } from '../models/mongodb.js';
+import { client, getByField, create, createIndex } from '../models/mongodb.js';
 
 async function initSetup() {
   try {
@@ -22,6 +22,8 @@ async function initSetup() {
       };
       await create('users', newAdmin);
     }
+
+    await createIndex('users', { email: 1 });
   } catch (err) {
     console.error(err);
   } finally {
