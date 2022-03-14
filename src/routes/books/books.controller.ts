@@ -98,25 +98,25 @@ async function getBook(req: Request, res: Response, next: NextFunction) {
   next(new NotFound('book not found'));
 }
 
-async function updateBook(req: Request, res: Response, next: NextFunction) {
+async function deleteBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
+  const book = await BookModel.deleteBook(bookId);
+
+  if (book) {
+    try {
+      await unlink(book.imgUrl);
+    } catch (err) {
+      console.error('image delete error from deleteBook of book model', err);
+    }
+
+    return res.sendStatus(204);
+  }
 
   next(new NotFound('book not found'));
 }
 
-async function deleteBook(req: Request, res: Response, next: NextFunction) {
+async function updateBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
-  const book = await deleteById(collectionName, bookId);
-
-  if (book?.value) {
-    try {
-      await unlink(book.value.path);
-    } catch (err) {
-      console.error('image delete error from deleteBook function', err);
-    }
-
-    return await res.sendStatus(204);
-  }
 
   next(new NotFound('book not found'));
 }

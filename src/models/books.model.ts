@@ -14,17 +14,18 @@ const transactionOptions = {
 };
 
 interface IBook {
-  title: String;
-  author: String;
-  qty: Number;
-  imgUrl: String;
+  title: string;
+  author: string;
+  qty: number;
+  imgUrl: string;
   borrow: Array<{ userId: String; date: Date }>;
 }
 
 interface IBookModel extends mongoose.Model<IBook> {
   getAllBooks(condition: { title?: RegExp; author?: RegExp }): Promise<IBook[]>;
   createBook(book: IBook): Promise<IBook>;
-  getBook(bookId: string): Promise<IBook>;
+  getBook(bookId: string): Promise<IBook | null | undefined>;
+  deleteBook(bookId: string): Promise<IBook | null | undefined>;
 }
 
 const bookSchema = new mongoose.Schema<IBook, IBookModel>({
@@ -53,6 +54,14 @@ bookSchema.statics.getBook = async function (bookId: string): Promise<IBook | nu
     return await this.findById(bookId);
   } catch (e) {
     console.log('error from getBook static method of book model :', e);
+  }
+};
+
+bookSchema.statics.deleteBook = async function (bookId: string): Promise<IBook | null | undefined> {
+  try {
+    return await this.findByIdAndDelete(bookId);
+  } catch (e) {
+    console.log('error from deleteBook static method of book model :', e);
   }
 };
 
