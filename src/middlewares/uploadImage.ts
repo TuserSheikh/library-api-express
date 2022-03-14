@@ -2,7 +2,7 @@ import multer from 'multer';
 import path from 'path';
 import { nanoid } from 'nanoid';
 
-import { BadRequest } from '../utils/errors.js';
+import { BadRequest } from '../utils/errors';
 
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {

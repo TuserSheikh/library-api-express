@@ -1,20 +1,21 @@
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import {Request, Response, NextFunction} from 'express'
 
-import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors.js';
-import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb.js';
-import { emailSend } from '../../utils/mail.js';
-import { payFine as payFineModel } from '../../models/users.model.js';
+import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors';
+import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb';
+import { emailSend } from '../../utils/mail';
+import { payFine as payFineModel } from '../../models/users.model';
 
 const collectionName = 'users';
 
-async function getUsers(req, res) {
+async function getUsers(req: Request, res: Response) {
   const users = await getAll(collectionName);
   return await res.status(200).json({ data: users });
 }
 
-async function signupUser(req, res, next) {
+async function signupUser(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     name: Joi.string().required(),
     email: Joi.string().email().required(),
@@ -49,7 +50,7 @@ async function signupUser(req, res, next) {
   }
 }
 
-async function signinUser(req, res, next) {
+async function signinUser(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
     email: Joi.string().email().required(),
     password: Joi.string().required(),
@@ -86,7 +87,7 @@ async function signinUser(req, res, next) {
   }
 }
 
-async function getUser(req, res, next) {
+async function getUser(req: Request, res: Response, next: NextFunction) {
   const userId = req.params.id;
 
   if (req.loggedinUser.role === 'member' && req.loggedinUser._id !== userId) {
@@ -102,7 +103,7 @@ async function getUser(req, res, next) {
   return next(new NotFound('user not found'));
 }
 
-async function updateUser(req, res, next) {
+async function updateUser(req: Request, res: Response, next: NextFunction) {
   const userId = req.params.id;
 
   const user = await getById(collectionName, userId);
@@ -128,7 +129,7 @@ async function updateUser(req, res, next) {
   }
 }
 
-async function deleteUser(req, res, next) {
+async function deleteUser(req: Request, res: Response, next: NextFunction) {
   const userId = req.params.id;
   const user = await deleteById(collectionName, userId);
 
@@ -139,7 +140,7 @@ async function deleteUser(req, res, next) {
   return next(new NotFound('user not found'));
 }
 
-async function payFine(req, res, next) {
+async function payFine(req: Request, res: Response, next: NextFunction) {
   const userId = req.loggedinUser._id;
   const fine = req.body.fine;
   const user = await getById('users', userId);
