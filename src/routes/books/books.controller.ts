@@ -51,7 +51,7 @@ async function createBook(req: Request, res: Response, next: NextFunction) {
   const path = req.file?.path;
 
   if (!path) {
-    return next(new BadRequest('image (.png|.jpg|.jpeg) is required'));
+    return next(new BadRequest('image is required'));
   }
 
   const schema = Joi.object({
