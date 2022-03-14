@@ -1,7 +1,7 @@
 import express from 'express';
 
-import { getUsers, signupUser, signinUser, getUser, updateUser, deleteUser, payFine } from './users.controller.js';
-import { admin, member } from '../../middlewares/auth.js';
+import { getUsers, signupUser, signinUser, getUser, updateUser, deleteUser, payFine } from './users.controller';
+import { admin, member } from '../../middlewares/auth';
 
 const usersRouter = express.Router();
 

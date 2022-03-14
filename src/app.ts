@@ -4,12 +4,12 @@ import morgan from 'morgan';
 import { createWriteStream } from 'fs';
 
 // middlewares
-import handleErrors from './middlewares/handleErrors.js';
+import handleErrors from './middlewares/handleErrors';
 
 // local files
-import { calculateFineJob } from './utils/cornJobs.js';
-import booksRouter from './routes/books/books.router.js';
-import usersRouter from './routes/users/users.router.js';
+import { calculateFineJob } from './utils/cornJobs';
+import booksRouter from './routes/books/books.router';
+import usersRouter from './routes/users/users.router';
 
 const app = express();
 const logStream = createWriteStream('logs/access.log', { flags: 'a' });

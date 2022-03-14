@@ -1,16 +1,56 @@
-import { ObjectId } from 'mongodb';
+import { ObjectId, ReadConcernLike, WriteConcern, ReadPreferenceMode } from 'mongodb';
+import mongoose from 'mongoose';
 
-import { client } from './mongodb.js';
-import { emailSend } from '../utils/mail.js';
+import { client } from './mongodb';
+import { emailSend } from '../utils/mail';
+import { IUser } from '../models/users.model';
+import { date, number, string } from 'joi';
 
 const transactionOptions = {
-  readPreference: 'primary',
-  readConcern: { level: 'local' },
-  writeConcern: { w: 'majority' },
+  readPreference: 'primary' as ReadPreferenceMode,
+  readConcern: { level: 'local' } as ReadConcernLike,
+  writeConcern: { w: 'majority' } as WriteConcern,
   maxCommitTimeMS: 1000,
 };
 
-async function borrowBook(userId, bookId) {
+interface IBook {
+  title: String;
+  author: String;
+  qty: Number;
+  imgUrl: String;
+  borrow: Array<{ userId: String; date: Date }>;
+}
+
+interface IBookModel extends mongoose.Model<IBook> {
+  getAllBooks(condition: { title?: RegExp; author?: RegExp }): Promise<IBook[]>;
+
+  createBook(book: IBook): Promise<IBook>;
+}
+
+const bookSchema = new mongoose.Schema<IBook, IBookModel>({
+  title: String,
+  author: String,
+  qty: { type: Number, min: 1, max: 100 },
+  imgUrl: String,
+  borrow: [
+    {
+      userId: String,
+      date: { type: Date, default: Date.now },
+    },
+  ],
+});
+
+bookSchema.statics.getAllBooks = async function (condition: any): Promise<IBook[]> {
+  return await this.find(condition);
+};
+
+bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
+  return await this.create(book);
+};
+
+const BookModel = mongoose.model<IBook, IBookModel>('Book', bookSchema);
+
+async function borrowBook(userId: string, bookId: string) {
   try {
     await client.connect();
     const session = client.startSession();
@@ -22,12 +62,12 @@ async function borrowBook(userId, bookId) {
         await client
           .db()
           .collection('books')
-          .updateOne({ _id: ObjectId(bookId) }, { $push: { borrow: { userId, date } } });
+          .updateOne({ _id: new ObjectId(bookId) }, { $push: { borrow: { userId, date } } });
 
         await client
           .db()
           .collection('users')
-          .updateOne({ _id: ObjectId(userId) }, { $push: { borrow: { bookId, date } } });
+          .updateOne({ _id: new ObjectId(userId) }, { $push: { borrow: { bookId, date } } });
       }, transactionOptions);
     } catch (err) {
       console.error('transaction borrow book: ', err);
@@ -41,7 +81,7 @@ async function borrowBook(userId, bookId) {
   }
 }
 
-async function returnbook(userId, bookId) {
+async function returnbook(userId: string, bookId: string) {
   try {
     await client.connect();
     const session = client.startSession();
@@ -52,7 +92,7 @@ async function returnbook(userId, bookId) {
           .db()
           .collection('books')
           .updateOne(
-            { _id: ObjectId(bookId) },
+            { _id: new ObjectId(bookId) },
             {
               $pull: { borrow: { userId } },
             }
@@ -62,7 +102,7 @@ async function returnbook(userId, bookId) {
           .db()
           .collection('users')
           .updateOne(
-            { _id: ObjectId(userId) },
+            { _id: new ObjectId(userId) },
             {
               $pull: { borrow: { bookId } },
             }
@@ -80,7 +120,7 @@ async function returnbook(userId, bookId) {
   }
 }
 
-async function updateFineAndDeactivateIFNecessary(totalFine, user) {
+async function updateFineAndDeactivateIFNecessary(totalFine: number, user: IUser) {
   try {
     await client.connect();
 
@@ -89,7 +129,7 @@ async function updateFineAndDeactivateIFNecessary(totalFine, user) {
         .db()
         .collection('users')
         .updateOne(
-          { _id: ObjectId(user._id) },
+          { _id: new ObjectId(user._id) },
           {
             $set: {
               fine: totalFine,
@@ -109,7 +149,7 @@ async function updateFineAndDeactivateIFNecessary(totalFine, user) {
         .db()
         .collection('users')
         .updateOne(
-          { _id: ObjectId(user._id) },
+          { _id: new ObjectId(user._id) },
           {
             $set: {
               fine: totalFine,
@@ -124,4 +164,4 @@ async function updateFineAndDeactivateIFNecessary(totalFine, user) {
   }
 }
 
-export { borrowBook, returnbook, updateFineAndDeactivateIFNecessary };
+export { borrowBook, returnbook, updateFineAndDeactivateIFNecessary, BookModel };

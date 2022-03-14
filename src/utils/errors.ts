@@ -1,7 +1,10 @@
-class GeneralError extends Error {}
+class GeneralError extends Error {
+  message!: string;
+  code!: number
+}
 
 class BadRequest extends GeneralError {
-  constructor(message = 'bad request') {
+  constructor(message: string = 'bad request') {
     super();
     this.message = message;
     this.code = 400;
@@ -9,14 +12,14 @@ class BadRequest extends GeneralError {
 }
 
 class Unauthorized extends GeneralError {
-  constructor(message = 'authentication failed') {
+  constructor(message: string = 'authentication failed') {
     super();
     this.message = message;
     this.code = 401;
   }
 }
 class Forbidden extends GeneralError {
-  constructor(message = 'access denied') {
+  constructor(message: string = 'access denied') {
     super();
     this.message = message;
     this.code = 403;
@@ -24,7 +27,7 @@ class Forbidden extends GeneralError {
 }
 
 class NotFound extends GeneralError {
-  constructor(message = 'not found') {
+  constructor(message: string = 'not found') {
     super();
     this.message = message;
     this.code = 404;
@@ -32,7 +35,7 @@ class NotFound extends GeneralError {
 }
 
 class InternalServerError extends GeneralError {
-  constructor(message = 'internal server error') {
+  constructor(message: string = 'internal server error') {
     super();
     this.message = message;
     this.code = 500;

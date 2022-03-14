@@ -1,6 +1,6 @@
 import { createTestAccount, createTransport, getTestMessageUrl } from 'nodemailer';
 
-async function emailSend(to, subject, text) {
+async function emailSend(to: string, subject: string, text: string) {
   let testAccount = await createTestAccount();
 
   let transporter = createTransport({

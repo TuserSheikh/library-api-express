@@ -1,33 +1,54 @@
 import { unlink } from 'fs/promises';
 import Joi from 'joi';
+import { NextFunction, Request, Response } from 'express';
 
-import { BadRequest, NotFound } from '../../utils/errors.js';
-import { getAll, getById, create, deleteById } from '../../models/mongodb.js';
-import { borrowBook as borrowBookModel, returnbook as returnBookModel } from '../../models/books.model.js';
+import { BadRequest, NotFound } from '../../utils/errors';
+import { getAll, getById, create, deleteById } from '../../models/mongodb';
+import { borrowBook as borrowBookModel, returnbook as returnBookModel, BookModel } from '../../models/books.model';
+import { join } from 'path';
+import { MongoServerError } from 'mongodb';
 
 const collectionName = 'books';
 
-async function getBooks(req, res) {
-  const { title, author } = req.query;
-
-  const condition = {};
-  if (title) {
-    condition.title = new RegExp(title);
-  }
-  if (author) {
-    condition.author = new RegExp(author);
-  }
-
-  const books = (await getAll(collectionName, condition)).map(book => {
-    book.path = `${req.protocol}://${req.get('host')}/${book.path}`;
-    return book;
+async function getBooks(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    title: Joi.string().trim(),
+    author: Joi.string().trim(),
   });
 
-  return await res.status(200).json({ data: books });
+  try {
+    const { title, author } = await schema.validateAsync(req.query);
+
+    const condition: {
+      title?: RegExp;
+      author?: RegExp;
+    } = {};
+
+    if (title) {
+      condition.title = new RegExp(title);
+    }
+
+    if (author) {
+      condition.author = new RegExp(author);
+    }
+
+    const books = await BookModel.getAllBooks(condition);
+
+    const data = books.map(book => {
+      book.imgUrl = `${req.protocol}://${req.get('host')}/${book.imgUrl}`;
+      return book;
+    });
+
+    return res.status(200).json({ data });
+  } catch (err) {
+    if (err instanceof Error) {
+      next(new BadRequest(err.message));
+    }
+  }
 }
 
-async function createBook(req, res, next) {
-  const path = req.file ? req.file.path : null;
+async function createBook(req: Request, res: Response, next: NextFunction) {
+  const path = req.file?.path;
 
   if (!path) {
     return next(new BadRequest('image (.png|.jpg|.jpeg) is required'));
@@ -43,28 +64,29 @@ async function createBook(req, res, next) {
     const value = await schema.validateAsync(req.body);
     value.qty = value.qty ?? 1;
 
-    const book = await create(collectionName, { ...value, path, borrow: [] });
-    if (!book) {
-      return next(new BadRequest('already exists'));
-    }
+    const book = await BookModel.createBook({ ...value, imgUrl: path, borrow: [] });
+    book.imgUrl = `${req.protocol}://${req.get('host')}/${book.imgUrl}`;
 
-    return res.status(201).json({
-      data: {
-        createdId: book.insertedId,
-      },
-    });
+    return res.status(201).json({ data: book });
   } catch (err) {
     try {
       await unlink(path);
     } catch (err) {
-      console.error('image delete error from createBook function', err);
+      console.error('image delete error from createBook of books.controller', err);
     }
 
-    next(new BadRequest(err.message));
+    if (err instanceof MongoServerError) {
+      if (err.code === 11000) {
+        next(new BadRequest('Book already exits'));
+      }
+      next(new BadRequest(err.message));
+    } else if (err instanceof Error) {
+      next(new BadRequest(err.message));
+    }
   }
 }
 
-async function getBook(req, res, next) {
+async function getBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
   const book = await getById(collectionName, bookId);
 
@@ -76,13 +98,13 @@ async function getBook(req, res, next) {
   next(new NotFound('book not found'));
 }
 
-async function updateBook(req, res, next) {
+async function updateBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
 
   next(new NotFound('book not found'));
 }
 
-async function deleteBook(req, res, next) {
+async function deleteBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
   const book = await deleteById(collectionName, bookId);
 
@@ -99,7 +121,7 @@ async function deleteBook(req, res, next) {
   next(new NotFound('book not found'));
 }
 
-async function borrowBook(req, res, next) {
+async function borrowBook(req: Request, res: Response, next: NextFunction) {
   const userId = req.loggedinUser._id;
   const bookId = req.body.booksId;
 
@@ -129,7 +151,7 @@ async function borrowBook(req, res, next) {
   res.sendStatus(204);
 }
 
-async function returnBook(req, res, next) {
+async function returnBook(req: Request, res: Response, next: NextFunction) {
   const userId = req.loggedinUser._id;
   const bookId = req.body.booksId;
 

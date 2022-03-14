@@ -1,11 +1,23 @@
 import { ObjectId } from 'mongodb';
 
-import { client } from './mongodb.js';
-import { emailSend } from '../utils/mail.js';
+import { client } from './mongodb';
+import { emailSend } from '../utils/mail';
+import { UserRole } from '../utils/enums'
 
 const collectionName = 'users';
 
-async function payFine(user) {
+interface IUser {
+  _id: string,
+  name : string,
+  email : string,
+  password : string,
+  borrow : Array<{bookId: string, Date: Date}>,
+  isActive : boolean,
+  fine : number,
+  role : UserRole
+}
+
+async function payFine(user: IUser) {
   try {
     await client.connect();
 
@@ -13,7 +25,7 @@ async function payFine(user) {
       .db()
       .collection(collectionName)
       .updateOne(
-        { _id: ObjectId(user._id) },
+        { _id: new ObjectId(user._id) },
         {
           $set: {
             fine: 0,
@@ -30,4 +42,4 @@ async function payFine(user) {
   }
 }
 
-export { payFine };
+export { IUser, payFine };

@@ -1,6 +1,7 @@
-import { GeneralError } from '../utils/errors.js';
+import { GeneralError } from '../utils/errors';
+import { ErrorRequestHandler } from 'express'
 
-const handleErrors = (err, req, res, next) => {
+const handleErrors: ErrorRequestHandler = (err, req, res, next) => {
   if (err instanceof GeneralError) {
     return res.status(err.code).json({
       error: {

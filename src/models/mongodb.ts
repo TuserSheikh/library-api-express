@@ -1,16 +1,14 @@
 import { MongoClient, ObjectId } from 'mongodb';
+import { IUser } from './users.model';
 
 // for mongodb atlas
 // const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@libraryapi.gdlba.mongodb.net/${process.env.DB_DATABASE}?retryWrites=true&w=majority`;
 // for local
 const uri = 'mongodb://localhost:27017/library';
 
-const client = new MongoClient(uri, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-});
+const client = new MongoClient(uri);
 
-async function getAll(collectionName, condition = {}) {
+async function getAll(collectionName: string, condition = {}) {
   try {
     await client.connect();
     return await client.db().collection(collectionName).find(condition).toArray();
@@ -21,13 +19,13 @@ async function getAll(collectionName, condition = {}) {
   }
 }
 
-async function getById(collectionName, documentId) {
+async function getById(collectionName: string, documentId: string) {
   try {
     await client.connect();
     return await client
       .db()
       .collection(collectionName)
-      .findOne({ _id: ObjectId(documentId) });
+      .findOne({ _id: new ObjectId(documentId) });
   } catch (err) {
     console.error(err);
   } finally {
@@ -35,7 +33,7 @@ async function getById(collectionName, documentId) {
   }
 }
 
-async function getByField(collectionName, fieldName, fieldValue) {
+async function getByField(collectionName: string, fieldName: string, fieldValue: string) {
   try {
     await client.connect();
     return await client
@@ -49,7 +47,7 @@ async function getByField(collectionName, fieldName, fieldValue) {
   }
 }
 
-async function create(collectionName, document) {
+async function create(collectionName: string, document: any) {
   try {
     await client.connect();
     return await client.db().collection(collectionName).insertOne(document);
@@ -60,13 +58,13 @@ async function create(collectionName, document) {
   }
 }
 
-async function update(collectionName, documentId, updatedDocument) {
+async function update(collectionName: string, documentId: string, updatedDocument: any) {
   try {
     await client.connect();
     return await client
       .db()
       .collection(collectionName)
-      .findOneAndUpdate({ _id: ObjectId(documentId) }, updatedDocument);
+      .findOneAndUpdate({ _id: new ObjectId(documentId) }, updatedDocument);
   } catch (err) {
     console.error(err);
   } finally {
@@ -74,13 +72,13 @@ async function update(collectionName, documentId, updatedDocument) {
   }
 }
 
-async function deleteById(collectionName, documentId) {
+async function deleteById(collectionName: string, documentId: string) {
   try {
     await client.connect();
     return await client
       .db()
       .collection(collectionName)
-      .findOneAndDelete({ _id: ObjectId(documentId) });
+      .findOneAndDelete({ _id: new ObjectId(documentId) });
   } catch (err) {
     console.error(err);
   } finally {
@@ -88,7 +86,7 @@ async function deleteById(collectionName, documentId) {
   }
 }
 
-async function createIndex(collectionName, indexFields) {
+async function createIndex(collectionName: string, indexFields: any) {
   try {
     await client.connect();
     return await client.db().collection(collectionName).createIndex(indexFields, { unique: true });
