@@ -117,59 +117,91 @@ async function deleteBook(req: Request, res: Response, next: NextFunction) {
 
 async function updateBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
+  const book = await BookModel.getBook(bookId);
+  const path = req.file?.path;
 
-  next(new NotFound('book not found'));
+  if (!book) {
+    next(new NotFound('book not found'));
+  }
+
+  const schema = Joi.object({
+    qty: Joi.number().positive().integer(),
+  });
+
+  try {
+    const value = await schema.validateAsync(req.body);
+
+    const newDocument: { imgUrl?: string; qty?: number } = { ...value };
+    if (path) {
+      newDocument.imgUrl = path; // add new image
+    }
+
+    const updatedBook = await BookModel.updateBook(bookId, newDocument);
+
+    if (updatedBook) {
+      updatedBook.imgUrl = `${req.protocol}://${req.get('host')}/${updatedBook.imgUrl}`;
+
+      // delete previous image
+      if (path && book) {
+        try {
+          path && (await unlink(book.imgUrl));
+        } catch (err) {
+          console.error('image delete error from updateBook of books.controller', err);
+        }
+      }
+    }
+
+    return res.status(200).json({ data: updatedBook });
+  } catch (err) {
+    try {
+      path && (await unlink(path));
+    } catch (err) {
+      console.error('image delete error from createBook of books.controller', err);
+    }
+
+    if (err instanceof Error) {
+      next(new BadRequest(err.message));
+    }
+  }
 }
 
 async function borrowBook(req: Request, res: Response, next: NextFunction) {
-  const userId = req.loggedinUser._id;
-  const bookId = req.body.booksId;
-
-  const book = await getById('books', bookId);
-  const user = await getById('users', userId);
-
-  if (!book) {
-    return next(new BadRequest('book not found'));
-  }
-
-  if (book.borrow.length >= book.qty) {
-    return next(new BadRequest('book is not available'));
-  }
-
-  const bookBorrowLimit = process.env.BOOK_BORROW_LIMIT || 5;
-  if (user.borrow.length >= bookBorrowLimit) {
-    return next(new BadRequest('book borrowing limit exceed'));
-  }
-
-  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
-  if (alreadyBorrowed) {
-    return next(new BadRequest('this book is already borrowed'));
-  }
-
-  await borrowBookModel(userId, bookId);
-
-  res.sendStatus(204);
+  //   const userId = req.loggedinUser._id;
+  //   const bookId = req.body.booksId;
+  //   const book = await getById('books', bookId);
+  //   const user = await getById('users', userId);
+  //   if (!book) {
+  //     return next(new BadRequest('book not found'));
+  //   }
+  //   if (book.borrow.length >= book.qty) {
+  //     return next(new BadRequest('book is not available'));
+  //   }
+  //   const bookBorrowLimit = process.env.BOOK_BORROW_LIMIT || 5;
+  //   if (user.borrow.length >= bookBorrowLimit) {
+  //     return next(new BadRequest('book borrowing limit exceed'));
+  //   }
+  //   const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  //   if (alreadyBorrowed) {
+  //     return next(new BadRequest('this book is already borrowed'));
+  //   }
+  //   await borrowBookModel(userId, bookId);
+  //   res.sendStatus(204);
 }
 
 async function returnBook(req: Request, res: Response, next: NextFunction) {
-  const userId = req.loggedinUser._id;
-  const bookId = req.body.booksId;
-
-  const book = await getById('books', bookId);
-  const user = await getById('users', userId);
-
-  if (!book) {
-    return next(new BadRequest('book not found'));
-  }
-
-  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
-  if (!alreadyBorrowed) {
-    return next(new BadRequest('this book is not borrowed'));
-  }
-
-  await returnBookModel(userId, bookId);
-
-  res.sendStatus(204);
+  //   const userId = req.loggedinUser._id;
+  //   const bookId = req.body.booksId;
+  //   const book = await getById('books', bookId);
+  //   const user = await getById('users', userId);
+  //   if (!book) {
+  //     return next(new BadRequest('book not found'));
+  //   }
+  //   const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  //   if (!alreadyBorrowed) {
+  //     return next(new BadRequest('this book is not borrowed'));
+  //   }
+  //   await returnBookModel(userId, bookId);
+  //   res.sendStatus(204);
 }
 
 export { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, returnBook };

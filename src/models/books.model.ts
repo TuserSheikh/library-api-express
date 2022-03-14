@@ -23,8 +23,12 @@ interface IBook {
 
 interface IBookModel extends mongoose.Model<IBook> {
   getAllBooks(condition: { title?: RegExp; author?: RegExp }): Promise<IBook[]>;
-  createBook(book: IBook): Promise<IBook>;
   getBook(bookId: string): Promise<IBook | null | undefined>;
+
+  createBook(book: IBook): Promise<IBook>;
+
+  updateBook(bookId: string, newDocument: { imgUrl?: string; qty?: number }): Promise<IBook | null | undefined>;
+
   deleteBook(bookId: string): Promise<IBook | null | undefined>;
 }
 
@@ -45,15 +49,28 @@ bookSchema.statics.getAllBooks = async function (condition: any): Promise<IBook[
   return await this.find(condition);
 };
 
-bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
-  return await this.create(book);
-};
-
 bookSchema.statics.getBook = async function (bookId: string): Promise<IBook | null | undefined> {
   try {
     return await this.findById(bookId);
   } catch (e) {
     console.log('error from getBook static method of book model :', e);
+  }
+};
+
+bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
+  return await this.create(book);
+};
+
+bookSchema.statics.updateBook = async function (
+  bookId: string,
+  newDocument: { imgUrl?: string; qty?: number }
+): Promise<IBook | null | undefined> {
+  try {
+    return await this.findByIdAndUpdate(bookId, newDocument, {
+      new: true,
+    });
+  } catch (e) {
+    console.log('error from updateBook static method of book model :', e);
   }
 };
 

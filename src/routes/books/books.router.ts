@@ -9,12 +9,14 @@ import { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, retu
 const booksRouter = express.Router();
 
 booksRouter.get('/', getBooks);
-booksRouter.post('/', librarian, upload.single('image'), createBook);
 booksRouter.get('/:id', getBook);
-booksRouter.put('/:id', librarian, updateBook);
-booksRouter.delete('/:id', librarian, deleteBook);
 
+booksRouter.post('/', librarian, upload.single('image'), createBook);
 booksRouter.post('/borrow', member, borrowBook);
 booksRouter.post('/return', member, returnBook);
+
+booksRouter.put('/:id', librarian, upload.single('image'), updateBook);
+
+booksRouter.delete('/:id', librarian, deleteBook);
 
 export default booksRouter;
