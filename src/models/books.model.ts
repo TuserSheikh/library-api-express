@@ -23,8 +23,8 @@ interface IBook {
 
 interface IBookModel extends mongoose.Model<IBook> {
   getAllBooks(condition: { title?: RegExp; author?: RegExp }): Promise<IBook[]>;
-
   createBook(book: IBook): Promise<IBook>;
+  getBook(bookId: string): Promise<IBook>;
 }
 
 const bookSchema = new mongoose.Schema<IBook, IBookModel>({
@@ -46,6 +46,14 @@ bookSchema.statics.getAllBooks = async function (condition: any): Promise<IBook[
 
 bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
   return await this.create(book);
+};
+
+bookSchema.statics.getBook = async function (bookId: string): Promise<IBook | null | undefined> {
+  try {
+    return await this.findById(bookId);
+  } catch (e) {
+    console.log('error from getBook static method of book model :', e);
+  }
 };
 
 const BookModel = mongoose.model<IBook, IBookModel>('Book', bookSchema);

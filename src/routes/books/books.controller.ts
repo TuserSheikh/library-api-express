@@ -88,11 +88,11 @@ async function createBook(req: Request, res: Response, next: NextFunction) {
 
 async function getBook(req: Request, res: Response, next: NextFunction) {
   const bookId = req.params.id;
-  const book = await getById(collectionName, bookId);
+  const book = await BookModel.getBook(bookId);
 
   if (book) {
-    book.path = `${req.protocol}://${req.get('host')}/${book.path}`;
-    return await res.status(200).json({ data: book });
+    book.imgUrl = `${req.protocol}://${req.get('host')}/${book.imgUrl}`;
+    return res.status(200).json({ data: book });
   }
 
   next(new NotFound('book not found'));
