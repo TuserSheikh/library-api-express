@@ -1,18 +1,37 @@
 import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import {Request, Response, NextFunction} from 'express'
+import { Request, Response, NextFunction } from 'express';
 
 import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors';
 import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb';
 import { emailSend } from '../../utils/mail';
-import { payFine as payFineModel } from '../../models/users.model';
+import { payFine as payFineModel, UserModel } from '../../models/users.model';
 
 const collectionName = 'users';
 
-async function getUsers(req: Request, res: Response) {
-  const users = await getAll(collectionName);
-  return await res.status(200).json({ data: users });
+async function getUsers(req: Request, res: Response, next: NextFunction) {
+  const schema = Joi.object({
+    name: Joi.string().trim(),
+  });
+
+  try {
+    const { name } = await schema.validateAsync(req.query);
+
+    const condition: { name?: RegExp } = {};
+
+    if (name) {
+      condition.name = new RegExp(name);
+    }
+
+    const users = await UserModel.getAllUsers(condition);
+
+    return res.status(200).json({ data: users });
+  } catch (err) {
+    if (err instanceof Error) {
+      next(new BadRequest(err.message));
+    }
+  }
 }
 
 async function signupUser(req: Request, res: Response, next: NextFunction) {

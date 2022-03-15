@@ -2,7 +2,7 @@ import express from 'express';
 
 // middlewares
 import upload from '../../middlewares/uploadImage';
-import { admin, librarian, member } from '../../middlewares/auth';
+import { librarian, member } from '../../middlewares/auth';
 
 import { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, returnBook } from './books.controller';
 

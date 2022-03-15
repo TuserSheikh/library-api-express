@@ -3,12 +3,8 @@ import Joi from 'joi';
 import { NextFunction, Request, Response } from 'express';
 
 import { BadRequest, NotFound } from '../../utils/errors';
-import { getAll, getById, create, deleteById } from '../../models/mongodb';
-import { borrowBook as borrowBookModel, returnbook as returnBookModel, BookModel } from '../../models/books.model';
-import { join } from 'path';
+import { BookModel } from '../../models/books.model';
 import { MongoServerError } from 'mongodb';
-
-const collectionName = 'books';
 
 async function getBooks(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({

@@ -4,7 +4,6 @@ import mongoose from 'mongoose';
 import { client } from './mongodb';
 import { emailSend } from '../utils/mail';
 import { IUser } from '../models/users.model';
-import { date, number, string } from 'joi';
 
 const transactionOptions = {
   readPreference: 'primary' as ReadPreferenceMode,
