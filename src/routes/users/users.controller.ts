@@ -157,12 +157,14 @@ async function updateUser(req: Request, res: Response, next: NextFunction) {
 }
 
 async function deleteUser(req: Request, res: Response, next: NextFunction) {
-  // const userId = req.params.id;
-  // const user = await deleteById(collectionName, userId);
-  // if (user?.value) {
-  //   return await res.sendStatus(204);
-  // }
-  // return next(new NotFound('user not found'));
+  const userId = req.params.id;
+  const user = await UserModel.delete(userId);
+
+  if (user) {
+    return res.sendStatus(204);
+  }
+
+  return next(new NotFound('user not found'));
 }
 
 async function payFine(req: Request, res: Response, next: NextFunction) {
