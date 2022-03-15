@@ -59,9 +59,9 @@ userSchema.statics.getUser = async function (userId: string): Promise<IUser | nu
   }
 };
 
-// bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
-//   return await this.create(book);
-// };
+userSchema.statics.createUser = async function (user: IUser): Promise<IUser> {
+  return await this.create(user);
+};
 
 // bookSchema.statics.updateBook = async function (
 //   bookId: string,

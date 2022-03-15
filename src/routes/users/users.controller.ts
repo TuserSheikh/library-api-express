@@ -8,6 +8,7 @@ import { getAll, getById, create, update, deleteById, getByField } from '../../m
 import { emailSend } from '../../utils/mail';
 import { payFine as payFineModel, UserModel } from '../../models/users.model';
 import { UserRole } from '../../utils/enums';
+import { MongoServerError } from 'mongodb';
 
 const collectionName = 'users';
 
@@ -68,27 +69,26 @@ async function signupUser(req: Request, res: Response, next: NextFunction) {
     const value = await schema.validateAsync(req.body);
     value.password = await bcrypt.hash(value.password, 10);
 
-    const user = await create(collectionName, { ...value, role: 'member', isActive: false, borrow: [], fine: 0 });
+    const user = await UserModel.createUser({ ...value });
 
-    if (!user) {
-      next(new BadRequest(`"${value.email}" already exists`));
-    }
-
-    const createdUser = await getById('users', user.insertedId);
-
-    await emailSend(
-      createdUser.email,
-      'Need Approval',
-      'Account created successfully but need admin approval to active.'
-    );
+    // await emailSend(
+    //   createdUser.email,
+    //   'Need Approval',
+    //   'Account created successfully but need admin approval to active.'
+    // );
 
     return res.status(201).json({
-      data: {
-        createdId: user.insertedId,
-      },
+      data: user,
     });
   } catch (err) {
-    next(new BadRequest(err.message));
+    if (err instanceof MongoServerError) {
+      if (err.code === 11000) {
+        next(new BadRequest('User already exits'));
+      }
+      next(new BadRequest(err.message));
+    } else if (err instanceof Error) {
+      next(new BadRequest(err.message));
+    }
   }
 }
 
