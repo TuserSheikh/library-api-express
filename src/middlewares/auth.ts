@@ -1,4 +1,4 @@
-import { Request, Response, NextFunction} from 'express'
+import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 
 import { Forbidden, Unauthorized } from '../utils/errors';
@@ -11,11 +11,11 @@ function admin(req: Request, res: Response, next: NextFunction) {
   try {
     const token = authorization?.split(' ')[1];
 
-    if(!token) {
+    if (!token) {
       return next(new Unauthorized());
     }
 
-    const currentUser = jwt.verify(token, process.env.JWT_SECRET || '') as IUser;
+    const { currentUser } = jwt.verify(token, process.env.JWT_SECRET || '') as { currentUser: IUser };
 
     if (currentUser.role > UserRole.Admin) {
       return next(new Forbidden());
@@ -23,7 +23,6 @@ function admin(req: Request, res: Response, next: NextFunction) {
 
     req.currentUser = currentUser;
     next();
-
   } catch (err) {
     console.error(err);
     return next(new Unauthorized());
@@ -36,11 +35,13 @@ function librarian(req: Request, res: Response, next: NextFunction) {
   try {
     const token = authorization?.split(' ')[1];
 
-    if(!token) {
+    if (!token) {
       return next(new Unauthorized());
     }
 
-    const currentUser = jwt.verify(token, process.env.JWT_SECRET || '') as IUser;
+    const { currentUser } = jwt.verify(token, process.env.JWT_SECRET || '') as { currentUser: IUser };
+
+    console.log(currentUser);
 
     if (currentUser.role > UserRole.Librarian) {
       return next(new Forbidden());
@@ -48,7 +49,6 @@ function librarian(req: Request, res: Response, next: NextFunction) {
 
     req.currentUser = currentUser;
     next();
-
   } catch (err) {
     console.error(err);
     return next(new Unauthorized());
@@ -61,12 +61,12 @@ function member(req: Request, res: Response, next: NextFunction) {
   try {
     const token = authorization?.split(' ')[1];
 
-    if(!token) {
+    if (!token) {
       return next(new Unauthorized());
     }
 
-    const currentUser = jwt.verify(token, process.env.JWT_SECRET || '') as IUser;
-    
+    const { currentUser } = jwt.verify(token, process.env.JWT_SECRET || '') as { currentUser: IUser };
+
     if (currentUser.role > UserRole.Member) {
       return next(new Forbidden());
     }

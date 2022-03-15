@@ -100,20 +100,24 @@ async function signinUser(req: Request, res: Response, next: NextFunction) {
 
   try {
     const value = await schema.validateAsync(req.body);
-    const user = await getByField(collectionName, 'email', value.email);
+    const user = await UserModel.getByEmail(value.email);
 
     if (user) {
-      if (!user.isActive) {
-        return next(new BadRequest('user deactivated'));
-      }
-
       const isValidUser = await bcrypt.compare(value.password, user.password);
       if (!isValidUser) {
         return next(new Unauthorized('Authentication Failed'));
       }
 
-      jwt.sign({ ...user }, process.env.JWT_SECRET, { expiresIn: '1h' }, function (err, token) {
-        console.error(err);
+      if (!user.isActive) {
+        return next(new BadRequest('User deactivated'));
+      }
+
+      jwt.sign({ currentUser: user }, process.env.JWT_SECRET || '', { expiresIn: '10h' }, function (err, token) {
+        if (err) {
+          console.error(err);
+          return next(new Unauthorized('Authentication Failed'));
+        }
+
         return res.status(200).json({
           data: {
             accessToken: token,
@@ -122,66 +126,59 @@ async function signinUser(req: Request, res: Response, next: NextFunction) {
         });
       });
     } else {
-      return next(new BadRequest('email not found'));
+      return next(new BadRequest('User not found'));
     }
   } catch (err) {
-    return next(new BadRequest(err.message));
+    if (err instanceof Error) {
+      return next(new BadRequest(err.message));
+    }
   }
 }
 
 async function updateUser(req: Request, res: Response, next: NextFunction) {
-  const userId = req.params.id;
-
-  const user = await getById(collectionName, userId);
-  if (!user) {
-    return next(new NotFound('user not found'));
-  }
-
-  const schema = Joi.object({
-    isActive: Joi.boolean().required(),
-  });
-
-  try {
-    const value = await schema.validateAsync(req.body);
-
-    const updateIserActiveStatus = {
-      $set: value,
-    };
-
-    await update(collectionName, userId, updateIserActiveStatus);
-    return res.sendStatus(204);
-  } catch (err) {
-    next(new BadRequest(err.message));
-  }
+  // const userId = req.params.id;
+  // const user = await getById(collectionName, userId);
+  // if (!user) {
+  //   return next(new NotFound('user not found'));
+  // }
+  // const schema = Joi.object({
+  //   isActive: Joi.boolean().required(),
+  // });
+  // try {
+  //   const value = await schema.validateAsync(req.body);
+  //   const updateIserActiveStatus = {
+  //     $set: value,
+  //   };
+  //   await update(collectionName, userId, updateIserActiveStatus);
+  //   return res.sendStatus(204);
+  // } catch (err) {
+  //   next(new BadRequest(err.message));
+  // }
 }
 
 async function deleteUser(req: Request, res: Response, next: NextFunction) {
-  const userId = req.params.id;
-  const user = await deleteById(collectionName, userId);
-
-  if (user?.value) {
-    return await res.sendStatus(204);
-  }
-
-  return next(new NotFound('user not found'));
+  // const userId = req.params.id;
+  // const user = await deleteById(collectionName, userId);
+  // if (user?.value) {
+  //   return await res.sendStatus(204);
+  // }
+  // return next(new NotFound('user not found'));
 }
 
 async function payFine(req: Request, res: Response, next: NextFunction) {
-  const userId = req.loggedinUser._id;
-  const fine = req.body.fine;
-  const user = await getById('users', userId);
-
-  const schema = Joi.object({
-    fine: Joi.number().integer().greater(0).min(user.fine).max(user.fine).required(),
-  });
-
-  try {
-    await schema.validateAsync({ fine });
-    await payFineModel(user);
-    return res.sendStatus(204);
-  } catch (err) {
-    next(new BadRequest(err.message));
-  }
+  // const userId = req.loggedinUser._id;
+  // const fine = req.body.fine;
+  // const user = await getById('users', userId);
+  // const schema = Joi.object({
+  //   fine: Joi.number().integer().greater(0).min(user.fine).max(user.fine).required(),
+  // });
+  // try {
+  //   await schema.validateAsync({ fine });
+  //   await payFineModel(user);
+  //   return res.sendStatus(204);
+  // } catch (err) {
+  //   next(new BadRequest(err.message));
+  // }
 }
 
 export { getUsers, signupUser, signinUser, getUser, updateUser, deleteUser, payFine };

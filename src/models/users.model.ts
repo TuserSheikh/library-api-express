@@ -21,6 +21,7 @@ interface IUser {
 interface IUserModel extends mongoose.Model<IUser> {
   getAllUsers(condition: { name?: RegExp }): Promise<IUser[]>;
   getUser(bookId: string): Promise<IUser | null | undefined>;
+  getByEmail(email: string): Promise<IUser | null | undefined>;
 
   createUser(user: IUser): Promise<IUser>;
 
@@ -55,7 +56,15 @@ userSchema.statics.getUser = async function (userId: string): Promise<IUser | nu
   try {
     return await this.findById(userId);
   } catch (e) {
-    console.log('error from getUser static method of users model :', e);
+    console.error('error from getUser static method of users model :', e);
+  }
+};
+
+userSchema.statics.getByEmail = async function (email: string): Promise<IUser | null | undefined> {
+  try {
+    return await this.findOne({ email });
+  } catch (e) {
+    console.error('error from getUser static method of users model :', e);
   }
 };
 
