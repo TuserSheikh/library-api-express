@@ -7,6 +7,7 @@ import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/error
 import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb';
 import { emailSend } from '../../utils/mail';
 import { payFine as payFineModel, UserModel } from '../../models/users.model';
+import { UserRole } from '../../utils/enums';
 
 const collectionName = 'users';
 
@@ -32,6 +33,28 @@ async function getUsers(req: Request, res: Response, next: NextFunction) {
       next(new BadRequest(err.message));
     }
   }
+}
+
+async function getUser(req: Request, res: Response, next: NextFunction) {
+  const userId = req.params.id;
+
+  const currentUser = await UserModel.getUser(req.currentUser._id);
+
+  if (!currentUser) {
+    // logout
+  }
+
+  if (currentUser && currentUser.role !== UserRole.Admin && currentUser._id.toString() !== userId) {
+    return next(new Forbidden());
+  }
+
+  const user = await UserModel.getUser(userId);
+
+  if (user) {
+    return res.status(200).json({ data: user });
+  }
+
+  return next(new NotFound('user not found'));
 }
 
 async function signupUser(req: Request, res: Response, next: NextFunction) {
@@ -104,22 +127,6 @@ async function signinUser(req: Request, res: Response, next: NextFunction) {
   } catch (err) {
     return next(new BadRequest(err.message));
   }
-}
-
-async function getUser(req: Request, res: Response, next: NextFunction) {
-  const userId = req.params.id;
-
-  if (req.loggedinUser.role === 'member' && req.loggedinUser._id !== userId) {
-    return next(new Forbidden());
-  }
-
-  const user = await getById(collectionName, userId);
-
-  if (user) {
-    return await res.status(200).json({ data: user });
-  }
-
-  return next(new NotFound('user not found'));
 }
 
 async function updateUser(req: Request, res: Response, next: NextFunction) {

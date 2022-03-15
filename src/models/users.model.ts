@@ -8,6 +8,7 @@ import { UserRole } from '../utils/enums';
 const collectionName = 'users';
 
 interface IUser {
+  _id: string;
   name: string;
   email: string;
   password: string;
@@ -50,13 +51,13 @@ userSchema.statics.getAllUsers = async function (condition: any): Promise<IUser[
   return await this.find(condition);
 };
 
-// bookSchema.statics.getBook = async function (bookId: string): Promise<IBook | null | undefined> {
-//   try {
-//     return await this.findById(bookId);
-//   } catch (e) {
-//     console.log('error from getBook static method of book model :', e);
-//   }
-// };
+userSchema.statics.getUser = async function (userId: string): Promise<IUser | null | undefined> {
+  try {
+    return await this.findById(userId);
+  } catch (e) {
+    console.log('error from getUser static method of users model :', e);
+  }
+};
 
 // bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
 //   return await this.create(book);
