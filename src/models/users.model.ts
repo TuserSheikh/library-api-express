@@ -21,6 +21,7 @@ interface IUser {
 interface IUserModel extends mongoose.Model<IUser> {
   getAllUsers(condition: { name?: RegExp }): Promise<IUser[]>;
   getUser(bookId: string): Promise<IUser | null | undefined>;
+  getByRole(role: UserRole): Promise<IUser[] | null | undefined>;
   getByEmail(email: string): Promise<IUser | null | undefined>;
 
   createUser(user: IUser): Promise<IUser>;
@@ -48,6 +49,8 @@ const userSchema = new mongoose.Schema<IUser, IUserModel>({
   ],
 });
 
+userSchema.index({ email: 1 });
+
 userSchema.statics.getAllUsers = async function (condition: any): Promise<IUser[]> {
   return await this.find(condition);
 };
@@ -57,6 +60,14 @@ userSchema.statics.getUser = async function (userId: string): Promise<IUser | nu
     return await this.findById(userId);
   } catch (e) {
     console.error('error from getUser static method of users model :', e);
+  }
+};
+
+userSchema.statics.getByRole = async function (role: UserRole): Promise<IUser[] | null | undefined> {
+  try {
+    return await this.findOne({ role });
+  } catch (e) {
+    console.error('error from getByRole static method of users model :', e);
   }
 };
 
@@ -90,14 +101,6 @@ userSchema.statics.delete = async function (userId: string): Promise<IUser | nul
 //     });
 //   } catch (e) {
 //     console.log('error from updateBook static method of book model :', e);
-//   }
-// };
-
-// bookSchema.statics.deleteBook = async function (bookId: string): Promise<IBook | null | undefined> {
-//   try {
-//     return await this.findByIdAndDelete(bookId);
-//   } catch (e) {
-//     console.log('error from deleteBook static method of book model :', e);
 //   }
 // };
 

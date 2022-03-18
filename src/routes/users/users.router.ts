@@ -5,14 +5,15 @@ import { admin, member } from '../../middlewares/auth';
 
 const usersRouter = express.Router();
 
+usersRouter.get('/', admin, getUsers);
+usersRouter.get('/:id', member, getUser);
+
+usersRouter.post('/fine', member, payFine);
 usersRouter.post('/signin', signinUser);
 usersRouter.post('/signup', signupUser);
 
-usersRouter.get('/', admin, getUsers);
-usersRouter.get('/:id', member, getUser);
-usersRouter.put('/:id', admin, updateUser);
-usersRouter.delete('/:id', admin, deleteUser);
+// usersRouter.put('/:id', admin, updateUser);
 
-usersRouter.post('/fine', member, payFine);
+usersRouter.delete('/:id', admin, deleteUser);
 
 export default usersRouter;
