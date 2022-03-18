@@ -25,6 +25,7 @@ interface IUserModel extends mongoose.Model<IUser> {
   getByEmail(email: string): Promise<IUser | null | undefined>;
 
   createUser(user: IUser): Promise<IUser>;
+  payFine(userId: string, fine: number): Promise<IUser | null | undefined>;
 
   updateUser(
     userId: string,
@@ -81,6 +82,14 @@ userSchema.statics.getByEmail = async function (email: string): Promise<IUser | 
 
 userSchema.statics.createUser = async function (user: IUser): Promise<IUser> {
   return await this.create(user);
+};
+
+userSchema.statics.payFine = async function (userId: string, fine: number): Promise<IUser | null | undefined> {
+  try {
+    return await this.findByIdAndUpdate(userId, { fine }, { new: true });
+  } catch (e) {
+    console.log('error from payFine static method of book model :', e);
+  }
 };
 
 userSchema.statics.delete = async function (userId: string): Promise<IUser | null | undefined> {

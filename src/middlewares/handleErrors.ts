@@ -1,5 +1,5 @@
 import { GeneralError } from '../utils/errors';
-import { ErrorRequestHandler } from 'express'
+import { ErrorRequestHandler } from 'express';
 
 const handleErrors: ErrorRequestHandler = (err, req, res, next) => {
   if (err instanceof GeneralError) {

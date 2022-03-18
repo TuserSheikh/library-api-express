@@ -2,11 +2,11 @@ import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
+import { z, ZodError } from 'zod';
 
 import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/errors';
-import { getAll, getById, create, update, deleteById, getByField } from '../../models/mongodb';
 import { emailSend } from '../../utils/mail';
-import { payFine as payFineModel, UserModel } from '../../models/users.model';
+import { UserModel } from '../../models/users.model';
 import { UserRole } from '../../utils/enums';
 import { MongoServerError } from 'mongodb';
 
@@ -168,19 +168,33 @@ async function deleteUser(req: Request, res: Response, next: NextFunction) {
 }
 
 async function payFine(req: Request, res: Response, next: NextFunction) {
-  // const userId = req.loggedinUser._id;
-  // const fine = req.body.fine;
-  // const user = await getById('users', userId);
-  // const schema = Joi.object({
-  //   fine: Joi.number().integer().greater(0).min(user.fine).max(user.fine).required(),
-  // });
-  // try {
-  //   await schema.validateAsync({ fine });
-  //   await payFineModel(user);
-  //   return res.sendStatus(204);
-  // } catch (err) {
-  //   next(new BadRequest(err.message));
-  // }
+  const user = await UserModel.getUser(req.currentUser._id);
+
+  if (user) {
+    const fineInput = req.body.fine;
+    const fineSchema = z.object({
+      fine: z.number().positive().int().min(1).max(user.fine),
+    });
+
+    try {
+      const { fine } = await fineSchema.parseAsync({ fine: fineInput });
+      const newFine = user.fine - fine;
+
+      const updatedUser = await UserModel.payFine(user._id, newFine);
+
+      return res.status(200).json({ data: updatedUser });
+    } catch (err) {
+      if (err instanceof ZodError) {
+        return next(new BadRequest(err.flatten()));
+      } else if (err instanceof Error) {
+        return next(new BadRequest(err.message));
+      }
+
+      console.error(err);
+    }
+  }
+
+  return next(new NotFound('User not found'));
 }
 
 export { getUsers, signupUser, signinUser, getUser, updateUser, deleteUser, payFine };
