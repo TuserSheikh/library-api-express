@@ -1,11 +1,7 @@
-import { ObjectId } from 'mongodb';
 import mongoose from 'mongoose';
 
-import { client } from './mongodb';
 import { emailSend } from '../utils/mail';
 import { UserRole } from '../utils/enums';
-
-const collectionName = 'users';
 
 interface IUser {
   _id: string;
@@ -15,7 +11,10 @@ interface IUser {
   role: UserRole;
   isActive: boolean;
   fine: number;
-  borrow: Array<{ bookId: string; date: Date }>;
+  borrow: Array<{
+    bookId: string;
+    date: Date;
+  }>;
 }
 
 interface IUserModel extends mongoose.Model<IUser> {
@@ -44,6 +43,7 @@ const userSchema = new mongoose.Schema<IUser, IUserModel>({
   fine: { type: Number, min: 0, default: 0 },
   borrow: [
     {
+      _id: false,
       bookId: String,
       date: { type: Date, default: Date.now },
     },
@@ -115,27 +115,4 @@ userSchema.statics.delete = async function (userId: string): Promise<IUser | nul
 
 const UserModel = mongoose.model<IUser, IUserModel>('User', userSchema);
 
-async function payFine(user: IUser) {
-  // try {
-  //   await client.connect();
-  //   await client
-  //     .db()
-  //     .collection(collectionName)
-  //     .updateOne(
-  //       { _id: new ObjectId(user._id) },
-  //       {
-  //         $set: {
-  //           fine: 0,
-  //         },
-  //       }
-  //     );
-  //   // send email to user for reactivate account
-  //   await emailSend(user.email, 'Account active', 'Account activate for pay fine');
-  // } catch (err) {
-  //   console.error(err);
-  // } finally {
-  //   await client.close();
-  // }
-}
-
-export { IUser, payFine, UserModel };
+export { IUser, UserModel };

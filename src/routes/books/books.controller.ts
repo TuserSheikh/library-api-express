@@ -2,9 +2,10 @@ import { unlink } from 'fs/promises';
 import Joi from 'joi';
 import { NextFunction, Request, Response } from 'express';
 
-import { BadRequest, NotFound } from '../../utils/errors';
+import { BadRequest, InternalServerError, NotFound } from '../../utils/errors';
 import { BookModel } from '../../models/books.model';
 import { MongoServerError } from 'mongodb';
+import { UserModel } from '../../models/users.model';
 
 async function getBooks(req: Request, res: Response, next: NextFunction) {
   const schema = Joi.object({
@@ -162,26 +163,43 @@ async function updateBook(req: Request, res: Response, next: NextFunction) {
 }
 
 async function borrowBook(req: Request, res: Response, next: NextFunction) {
-  //   const userId = req.loggedinUser._id;
-  //   const bookId = req.body.booksId;
-  //   const book = await getById('books', bookId);
-  //   const user = await getById('users', userId);
-  //   if (!book) {
-  //     return next(new BadRequest('book not found'));
-  //   }
-  //   if (book.borrow.length >= book.qty) {
-  //     return next(new BadRequest('book is not available'));
-  //   }
-  //   const bookBorrowLimit = process.env.BOOK_BORROW_LIMIT || 5;
-  //   if (user.borrow.length >= bookBorrowLimit) {
-  //     return next(new BadRequest('book borrowing limit exceed'));
-  //   }
-  //   const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
-  //   if (alreadyBorrowed) {
-  //     return next(new BadRequest('this book is already borrowed'));
-  //   }
-  //   await borrowBookModel(userId, bookId);
-  //   res.sendStatus(204);
+  const userId = req.currentUser._id;
+  const bookId = req.body.booksId;
+
+  const user = await UserModel.getUser(userId);
+
+  if (!user) {
+    return next(new BadRequest('user not found'));
+    // logout
+    // return authentication error
+  }
+
+  const book = await BookModel.getBook(bookId);
+  if (!book) {
+    return next(new BadRequest('Book not found'));
+  }
+
+  if (book.borrow.length >= book.qty) {
+    return next(new BadRequest('Book is not available'));
+  }
+
+  const bookBorrowLimit = process.env.BOOK_BORROW_LIMIT || 5;
+  if (user.borrow.length >= bookBorrowLimit) {
+    return next(new BadRequest('Book borrowing limit exceed'));
+  }
+
+  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  if (alreadyBorrowed) {
+    return next(new BadRequest('This book is already borrowed'));
+  }
+
+  const isBorrow = await BookModel.borrowBook(userId, bookId);
+
+  if (isBorrow) {
+    return res.sendStatus(204);
+  }
+
+  return next(new InternalServerError());
 }
 
 async function returnBook(req: Request, res: Response, next: NextFunction) {
