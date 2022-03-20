@@ -1,5 +1,4 @@
 import { MongoClient, ObjectId } from 'mongodb';
-import { IUser } from './users.model';
 
 // for mongodb atlas
 // const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@libraryapi.gdlba.mongodb.net/${process.env.DB_DATABASE}?retryWrites=true&w=majority`;

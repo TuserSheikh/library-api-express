@@ -203,19 +203,34 @@ async function borrowBook(req: Request, res: Response, next: NextFunction) {
 }
 
 async function returnBook(req: Request, res: Response, next: NextFunction) {
-  //   const userId = req.loggedinUser._id;
-  //   const bookId = req.body.booksId;
-  //   const book = await getById('books', bookId);
-  //   const user = await getById('users', userId);
-  //   if (!book) {
-  //     return next(new BadRequest('book not found'));
-  //   }
-  //   const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
-  //   if (!alreadyBorrowed) {
-  //     return next(new BadRequest('this book is not borrowed'));
-  //   }
-  //   await returnBookModel(userId, bookId);
-  //   res.sendStatus(204);
+  const userId = req.currentUser._id;
+  const bookId = req.body.booksId;
+
+  const user = await UserModel.getUser(userId);
+
+  if (!user) {
+    return next(new BadRequest('user not found'));
+    // logout
+    // return authentication error
+  }
+
+  const book = await BookModel.getBook(bookId);
+  if (!book) {
+    return next(new BadRequest('Book not found'));
+  }
+
+  const alreadyBorrowed = user.borrow.find(borrow => borrow.bookId === bookId);
+  if (!alreadyBorrowed) {
+    return next(new BadRequest('This book is not borrowed'));
+  }
+
+  const isReturn = await BookModel.returnBook(userId, bookId);
+
+  if (isReturn) {
+    return res.sendStatus(204);
+  }
+
+  return next(new InternalServerError());
 }
 
 export { getBooks, createBook, getBook, updateBook, deleteBook, borrowBook, returnBook };

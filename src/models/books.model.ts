@@ -20,6 +20,7 @@ interface IBookModel extends mongoose.Model<IBook> {
 
   createBook(book: IBook): Promise<IBook>;
   borrowBook(userId: string, bookId: string): Promise<boolean | null | undefined>;
+  returnBook(userId: string, bookId: string): Promise<boolean | null | undefined>;
 
   updateBook(bookId: string, newDocument: { imgUrl?: string; qty?: number }): Promise<IBook | null | undefined>;
 
@@ -73,6 +74,21 @@ bookSchema.statics.borrowBook = async function (userId: string, bookId: string):
   }
 };
 
+bookSchema.statics.returnBook = async function (userId: string, bookId: string): Promise<boolean | null | undefined> {
+  try {
+    const session = await mongoose.startSession();
+    await session.withTransaction(async () => {
+      await this.findByIdAndUpdate(bookId, { $pull: { borrow: { userId } } });
+      await UserModel.findByIdAndUpdate(userId, { $pull: { borrow: { bookId } } });
+    });
+    session.endSession();
+
+    return true;
+  } catch (e) {
+    console.log('error from borrowBook static method of book model :', e);
+  }
+};
+
 bookSchema.statics.updateBook = async function (
   bookId: string,
   newDocument: { imgUrl?: string; qty?: number }
@@ -95,43 +111,6 @@ bookSchema.statics.deleteBook = async function (bookId: string): Promise<IBook |
 };
 
 const BookModel = mongoose.model<IBook, IBookModel>('Book', bookSchema);
-
-async function returnbook(userId: string, bookId: string) {
-  // try {
-  //   await client.connect();
-  //   const session = client.startSession();
-  //   try {
-  //     await session.withTransaction(async session => {
-  //       await client
-  //         .db()
-  //         .collection('books')
-  //         .updateOne(
-  //           { _id: new ObjectId(bookId) },
-  //           {
-  //             $pull: { borrow: { userId } },
-  //           }
-  //         );
-  //       await client
-  //         .db()
-  //         .collection('users')
-  //         .updateOne(
-  //           { _id: new ObjectId(userId) },
-  //           {
-  //             $pull: { borrow: { bookId } },
-  //           }
-  //         );
-  //     }, transactionOptions);
-  //   } catch (err) {
-  //     console.error('transaction borrow book: ', err);
-  //   } finally {
-  //     await session.endSession();
-  //   }
-  // } catch (err) {
-  //   console.error(err);
-  // } finally {
-  //   await client.close();
-  // }
-}
 
 async function updateFineAndDeactivateIFNecessary(totalFine: number, user: IUser) {
   // try {
@@ -175,4 +154,4 @@ async function updateFineAndDeactivateIFNecessary(totalFine: number, user: IUser
   // }
 }
 
-export { returnbook, updateFineAndDeactivateIFNecessary, BookModel };
+export { updateFineAndDeactivateIFNecessary, BookModel };
