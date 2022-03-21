@@ -112,46 +112,4 @@ bookSchema.statics.deleteBook = async function (bookId: string): Promise<IBook |
 
 const BookModel = mongoose.model<IBook, IBookModel>('Book', bookSchema);
 
-async function updateFineAndDeactivateIFNecessary(totalFine: number, user: IUser) {
-  // try {
-  //   await client.connect();
-  //   if (totalFine > 100) {
-  //     await client
-  //       .db()
-  //       .collection('users')
-  //       .updateOne(
-  //         { _id: new ObjectId(user._id) },
-  //         {
-  //           $set: {
-  //             fine: totalFine,
-  //             isActive: false,
-  //           },
-  //         }
-  //       );
-  //     // send email to user for user deactivate
-  //     await emailSend(
-  //       user.email,
-  //       'Account deactivate for fine',
-  //       'Account temporary deactivate for fine. to active account pay the due fine'
-  //     );
-  //   } else {
-  //     await client
-  //       .db()
-  //       .collection('users')
-  //       .updateOne(
-  //         { _id: new ObjectId(user._id) },
-  //         {
-  //           $set: {
-  //             fine: totalFine,
-  //           },
-  //         }
-  //       );
-  //   }
-  // } catch (err) {
-  //   console.error(err);
-  // } finally {
-  //   await client.close();
-  // }
-}
-
-export { updateFineAndDeactivateIFNecessary, BookModel };
+export { BookModel };

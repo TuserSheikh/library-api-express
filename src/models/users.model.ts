@@ -18,13 +18,14 @@ interface IUser {
 }
 
 interface IUserModel extends mongoose.Model<IUser> {
-  getAllUsers(condition: { name?: RegExp }): Promise<IUser[]>;
+  getAllUsers(condition: any): Promise<IUser[]>;
   getUser(bookId: string): Promise<IUser | null | undefined>;
   getByRole(role: UserRole): Promise<IUser[] | null | undefined>;
   getByEmail(email: string): Promise<IUser | null | undefined>;
 
   createUser(user: IUser): Promise<IUser>;
   payFine(userId: string, fine: number): Promise<IUser | null | undefined>;
+  updateFineAndDeactivateIFNecessary(userId: string, totalFine: number): Promise<IUser | null | undefined>;
 
   updateUser(
     userId: string,
@@ -92,6 +93,29 @@ userSchema.statics.payFine = async function (userId: string, fine: number): Prom
   }
 };
 
+userSchema.statics.updateFineAndDeactivateIFNecessary = async function (
+  userId: string,
+  totalFine: number
+): Promise<IUser | null | undefined> {
+  try {
+    if (totalFine > 100) {
+      return await this.findByIdAndUpdate(userId, { $set: { fine: totalFine, isActive: false } }, { new: true });
+      // TODO: send email
+      //
+      // send email to user for user deactivate
+      // await emailSend(
+      //   user.email,
+      //   'Account deactivate for fine',
+      //   'Account temporary deactivate for fine. to active account pay the due fine'
+      // );
+    } else {
+      return await this.findByIdAndUpdate(userId, { $set: { fine: totalFine } }, { new: true });
+    }
+  } catch (e) {
+    console.log('error from updateFineAndDeactivateIFNecessary static method of user model :', e);
+  }
+};
+
 userSchema.statics.delete = async function (userId: string): Promise<IUser | null | undefined> {
   try {
     return await this.findByIdAndDelete(userId);
@@ -99,19 +123,6 @@ userSchema.statics.delete = async function (userId: string): Promise<IUser | nul
     console.log('error from deleteUser static method of user model :', e);
   }
 };
-
-// bookSchema.statics.updateBook = async function (
-//   bookId: string,
-//   newDocument: { imgUrl?: string; qty?: number }
-// ): Promise<IBook | null | undefined> {
-//   try {
-//     return await this.findByIdAndUpdate(bookId, newDocument, {
-//       new: true,
-//     });
-//   } catch (e) {
-//     console.log('error from updateBook static method of book model :', e);
-//   }
-// };
 
 const UserModel = mongoose.model<IUser, IUserModel>('User', userSchema);
 
