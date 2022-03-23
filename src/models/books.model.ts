@@ -41,7 +41,7 @@ const bookSchema = new mongoose.Schema<IBook, IBookModel>({
   ],
 });
 
-bookSchema.index({ title: 1, author: 1 });
+bookSchema.index({ title: 1, author: 1 }, { unique: true });
 
 bookSchema.statics.getAllBooks = async function (condition: any): Promise<IBook[]> {
   return await this.find(condition);

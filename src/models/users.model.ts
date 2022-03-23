@@ -23,7 +23,7 @@ interface IUserModel extends mongoose.Model<IUser> {
   getByRole(role: UserRole): Promise<IUser[] | null | undefined>;
   getByEmail(email: string): Promise<IUser | null | undefined>;
 
-  createUser(user: IUser): Promise<IUser>;
+  createUser(user: { name: string; email: string; password: string }): Promise<IUser | undefined>;
   payFine(userId: string, fine: number): Promise<IUser | null | undefined>;
   updateFineAndDeactivateIFNecessary(userId: string, totalFine: number): Promise<IUser | null | undefined>;
 
@@ -51,7 +51,7 @@ const userSchema = new mongoose.Schema<IUser, IUserModel>({
   ],
 });
 
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 }, { unique: true });
 
 userSchema.statics.getAllUsers = async function (condition: any): Promise<IUser[]> {
   return await this.find(condition);
@@ -81,8 +81,16 @@ userSchema.statics.getByEmail = async function (email: string): Promise<IUser | 
   }
 };
 
-userSchema.statics.createUser = async function (user: IUser): Promise<IUser> {
-  return await this.create(user);
+userSchema.statics.createUser = async function (user: {
+  name: string;
+  email: string;
+  password: string;
+}): Promise<IUser | undefined> {
+  try {
+    return await this.create(user);
+  } catch (e) {
+    console.error('error from createUser static method of users model :', e);
+  }
 };
 
 userSchema.statics.payFine = async function (userId: string, fine: number): Promise<IUser | null | undefined> {

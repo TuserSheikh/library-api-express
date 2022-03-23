@@ -18,9 +18,9 @@ calculateFineJob.start();
 
 app.use(express.json());
 app.use(morgan('combined', { stream: logStream }));
-app.use(morgan('combined'));
 
 app.use('/images', express.static('images'));
+
 app.use('/books', booksRouter);
 app.use('/users', usersRouter);
 

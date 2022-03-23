@@ -1,4 +1,3 @@
-import Joi from 'joi';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
@@ -8,31 +7,32 @@ import { BadRequest, Unauthorized, NotFound, Forbidden } from '../../utils/error
 import { emailSend } from '../../utils/mail';
 import { UserModel } from '../../models/users.model';
 import { UserRole } from '../../utils/enums';
-import { MongoServerError } from 'mongodb';
-
-const collectionName = 'users';
 
 async function getUsers(req: Request, res: Response, next: NextFunction) {
-  const schema = Joi.object({
-    name: Joi.string().trim(),
+  const trimString = (u: unknown) => (typeof u === 'string' ? u.trim() : u);
+  const nameSchema = z.object({
+    name: z.preprocess(trimString, z.string().min(1).optional()),
   });
 
   try {
-    const { name } = await schema.validateAsync(req.query);
+    const { name } = await nameSchema.parseAsync(req.query);
 
     const condition: { name?: RegExp } = {};
-
     if (name) {
-      condition.name = new RegExp(name);
+      condition.name = new RegExp(name, 'i');
     }
 
     const users = await UserModel.getAllUsers(condition);
 
     return res.status(200).json({ data: users });
   } catch (err) {
-    if (err instanceof Error) {
-      next(new BadRequest(err.message));
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
+    } else if (err instanceof Error) {
+      return next(new BadRequest(err.message));
     }
+
+    console.error(err);
   }
 }
 
@@ -42,6 +42,7 @@ async function getUser(req: Request, res: Response, next: NextFunction) {
   const currentUser = await UserModel.getUser(req.currentUser._id);
 
   if (!currentUser) {
+    //TODO
     // logout
   }
 
@@ -59,51 +60,61 @@ async function getUser(req: Request, res: Response, next: NextFunction) {
 }
 
 async function signupUser(req: Request, res: Response, next: NextFunction) {
-  const schema = Joi.object({
-    name: Joi.string().required(),
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
+  const trimString = (u: unknown) => (typeof u === 'string' ? u.trim() : u);
+  const userSchema = z.object({
+    name: z.preprocess(trimString, z.string().min(2)),
+    email: z.preprocess(trimString, z.string().email()),
+    password: z.preprocess(trimString, z.string().min(6)),
   });
 
   try {
-    const value = await schema.validateAsync(req.body);
-    value.password = await bcrypt.hash(value.password, 10);
+    const newUser = await userSchema.parseAsync(req.body);
+    newUser.password = await bcrypt.hash(newUser.password, 10);
 
-    const user = await UserModel.createUser({ ...value });
+    const user = await UserModel.createUser({ ...newUser });
 
+    //TODO email send
     // await emailSend(
     //   createdUser.email,
     //   'Need Approval',
     //   'Account created successfully but need admin approval to active.'
     // );
 
-    return res.status(201).json({
-      data: user,
-    });
-  } catch (err) {
-    if (err instanceof MongoServerError) {
-      if (err.code === 11000) {
-        next(new BadRequest('User already exits'));
-      }
-      next(new BadRequest(err.message));
-    } else if (err instanceof Error) {
-      next(new BadRequest(err.message));
+    if (user) {
+      return res.status(201).json({
+        data: user,
+      });
     }
+    return next(new BadRequest('User already exits'));
+  } catch (err) {
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
+    } else if (err instanceof Error) {
+      return next(new BadRequest(err.message));
+    }
+
+    console.error(err);
   }
 }
 
 async function signinUser(req: Request, res: Response, next: NextFunction) {
-  const schema = Joi.object({
-    email: Joi.string().email().required(),
-    password: Joi.string().required(),
+  const trimString = (u: unknown) => (typeof u === 'string' ? u.trim() : u);
+  const userSchema = z.object({
+    email: z.preprocess(trimString, z.string().email()),
+    password: z.preprocess(trimString, z.string()),
   });
+  // const schema = Joi.object({
+  //   email: Joi.string().email().required(),
+  //   password: Joi.string().required(),
+  // });
 
   try {
-    const value = await schema.validateAsync(req.body);
-    const user = await UserModel.getByEmail(value.email);
+    const signinUser = await userSchema.parseAsync(req.body);
+    // const value = await schema.validateAsync(req.body);
+    const user = await UserModel.getByEmail(signinUser.email);
 
     if (user) {
-      const isValidUser = await bcrypt.compare(value.password, user.password);
+      const isValidUser = await bcrypt.compare(signinUser.password, user.password);
       if (!isValidUser) {
         return next(new Unauthorized('Authentication Failed'));
       }
@@ -129,9 +140,13 @@ async function signinUser(req: Request, res: Response, next: NextFunction) {
       return next(new BadRequest('User not found'));
     }
   } catch (err) {
-    if (err instanceof Error) {
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
+    } else if (err instanceof Error) {
       return next(new BadRequest(err.message));
     }
+
+    console.error(err);
   }
 }
 
