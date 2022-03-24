@@ -18,7 +18,7 @@ interface IBookModel extends mongoose.Model<IBook> {
   getAllBooks(condition: { title?: RegExp; author?: RegExp }): Promise<IBook[]>;
   getBook(bookId: string): Promise<IBook | null | undefined>;
 
-  createBook(book: IBook): Promise<IBook>;
+  createBook(book: { title: string; author: string; qty?: number; imgUrl: string }): Promise<IBook | undefined>;
   borrowBook(userId: string, bookId: string): Promise<boolean | null | undefined>;
   returnBook(userId: string, bookId: string): Promise<boolean | null | undefined>;
 
@@ -30,7 +30,7 @@ interface IBookModel extends mongoose.Model<IBook> {
 const bookSchema = new mongoose.Schema<IBook, IBookModel>({
   title: String,
   author: String,
-  qty: { type: Number, min: 1, max: 100 },
+  qty: { type: Number, min: 1, max: 100, default: 1 },
   imgUrl: String,
   borrow: [
     {
@@ -55,8 +55,16 @@ bookSchema.statics.getBook = async function (bookId: string): Promise<IBook | nu
   }
 };
 
-bookSchema.statics.createBook = async function (book: IBook): Promise<IBook> {
-  return await this.create(book);
+bookSchema.statics.createBook = async function (book: {
+  title: string;
+  author: string;
+  qty?: number;
+}): Promise<IBook | undefined> {
+  try {
+    return await this.create(book);
+  } catch (e) {
+    console.error('error from deleteBook static method of book model :', e);
+  }
 };
 
 bookSchema.statics.borrowBook = async function (userId: string, bookId: string): Promise<boolean | null | undefined> {

@@ -41,8 +41,6 @@ function librarian(req: Request, res: Response, next: NextFunction) {
 
     const { currentUser } = jwt.verify(token, process.env.JWT_SECRET || '') as { currentUser: IUser };
 
-    console.log(currentUser);
-
     if (currentUser.role > UserRole.Librarian) {
       return next(new Forbidden());
     }

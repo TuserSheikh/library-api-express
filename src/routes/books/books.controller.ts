@@ -1,20 +1,20 @@
 import { unlink } from 'fs/promises';
-import Joi from 'joi';
 import { NextFunction, Request, Response } from 'express';
+import { z, ZodError } from 'zod';
 
 import { BadRequest, InternalServerError, NotFound } from '../../utils/errors';
 import { BookModel } from '../../models/books.model';
-import { MongoServerError } from 'mongodb';
 import { UserModel } from '../../models/users.model';
 
 async function getBooks(req: Request, res: Response, next: NextFunction) {
-  const schema = Joi.object({
-    title: Joi.string().trim(),
-    author: Joi.string().trim(),
+  const trimString = (u: unknown) => (typeof u === 'string' ? u.trim() : u);
+  const bookSchema = z.object({
+    title: z.preprocess(trimString, z.string().min(1).optional()),
+    author: z.preprocess(trimString, z.string().min(1).optional()),
   });
 
   try {
-    const { title, author } = await schema.validateAsync(req.query);
+    const { title, author } = await bookSchema.parseAsync(req.query);
 
     const condition: {
       title?: RegExp;
@@ -38,9 +38,13 @@ async function getBooks(req: Request, res: Response, next: NextFunction) {
 
     return res.status(200).json({ data });
   } catch (err) {
-    if (err instanceof Error) {
-      next(new BadRequest(err.message));
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
+    } else if (err instanceof Error) {
+      return next(new BadRequest(err.message));
     }
+
+    console.error(err);
   }
 }
 
@@ -51,20 +55,30 @@ async function createBook(req: Request, res: Response, next: NextFunction) {
     return next(new BadRequest('image is required'));
   }
 
-  const schema = Joi.object({
-    title: Joi.string().required(),
-    author: Joi.string().required(),
-    qty: Joi.number().positive().integer(),
+  const trimString = (u: unknown) => (typeof u === 'string' ? u.trim() : u);
+  const isNumberString = (input: unknown) => z.string().regex(/^\d+$/).safeParse(input).success;
+  const numberFromNumberOrNumberString = (input: unknown) => {
+    if (isNumberString(input)) return Number(input);
+    return input;
+  };
+  const bookSchema = z.object({
+    title: z.preprocess(trimString, z.string().min(1)),
+    author: z.preprocess(trimString, z.string().min(1)),
+    qty: z.preprocess(numberFromNumberOrNumberString, z.number().positive().int().max(100).optional()),
   });
 
   try {
-    const value = await schema.validateAsync(req.body);
-    value.qty = value.qty ?? 1;
+    const bookData = await bookSchema.parseAsync(req.body);
+    bookData.qty = bookData.qty ?? 1;
 
-    const book = await BookModel.createBook({ ...value, imgUrl: path, borrow: [] });
-    book.imgUrl = `${req.protocol}://${req.get('host')}/${book.imgUrl}`;
+    const book = await BookModel.createBook({ ...bookData, imgUrl: path });
 
-    return res.status(201).json({ data: book });
+    if (book) {
+      book.imgUrl = `${req.protocol}://${req.get('host')}/${book.imgUrl}`;
+      return res.status(201).json({ data: book });
+    }
+
+    return next(new BadRequest('Book already exits'));
   } catch (err) {
     try {
       await unlink(path);
@@ -72,14 +86,13 @@ async function createBook(req: Request, res: Response, next: NextFunction) {
       console.error('image delete error from createBook of books.controller', err);
     }
 
-    if (err instanceof MongoServerError) {
-      if (err.code === 11000) {
-        next(new BadRequest('Book already exits'));
-      }
-      next(new BadRequest(err.message));
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
     } else if (err instanceof Error) {
-      next(new BadRequest(err.message));
+      return next(new BadRequest(err.message));
     }
+
+    console.error(err);
   }
 }
 
@@ -121,14 +134,19 @@ async function updateBook(req: Request, res: Response, next: NextFunction) {
     next(new NotFound('book not found'));
   }
 
-  const schema = Joi.object({
-    qty: Joi.number().positive().integer(),
+  const isNumberString = (input: unknown) => z.string().regex(/^\d+$/).safeParse(input).success;
+  const numberFromNumberOrNumberString = (input: unknown) => {
+    if (isNumberString(input)) return Number(input);
+    return input;
+  };
+  const qtySchema = z.object({
+    qty: z.preprocess(numberFromNumberOrNumberString, z.number().positive().int().max(100).optional()),
   });
 
   try {
-    const value = await schema.validateAsync(req.body);
+    const { qty } = await qtySchema.parseAsync(req.body);
 
-    const newDocument: { imgUrl?: string; qty?: number } = { ...value };
+    const newDocument: { imgUrl?: string; qty?: number } = { qty };
     if (path) {
       newDocument.imgUrl = path; // add new image
     }
@@ -156,9 +174,13 @@ async function updateBook(req: Request, res: Response, next: NextFunction) {
       console.error('image delete error from createBook of books.controller', err);
     }
 
-    if (err instanceof Error) {
-      next(new BadRequest(err.message));
+    if (err instanceof ZodError) {
+      return next(new BadRequest(err.flatten()));
+    } else if (err instanceof Error) {
+      return next(new BadRequest(err.message));
     }
+
+    console.error(err);
   }
 }
 
@@ -170,6 +192,7 @@ async function borrowBook(req: Request, res: Response, next: NextFunction) {
 
   if (!user) {
     return next(new BadRequest('user not found'));
+    // TODO
     // logout
     // return authentication error
   }
